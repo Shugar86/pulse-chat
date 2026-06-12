@@ -37,6 +37,7 @@
   "contactStatus_pending": "В ожидании",
   "contactStatus_accepted": "Принят",
   "contactStatus_blocked": "Заблокирован",
+  "contactStatus_removed": "Удалён",
   "accept": "Принять",
   "remove": "Удалить"
 }

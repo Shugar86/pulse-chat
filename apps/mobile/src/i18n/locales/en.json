@@ -37,6 +37,7 @@
   "contactStatus_pending": "Pending",
   "contactStatus_accepted": "Accepted",
   "contactStatus_blocked": "Blocked",
+  "contactStatus_removed": "Removed",
   "accept": "Accept",
   "remove": "Remove"
 }

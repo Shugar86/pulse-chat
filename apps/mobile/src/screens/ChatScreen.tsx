@@ -17,8 +17,6 @@ import type { ChatStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<ChatStackParamList, 'Chat'>;
 
-const MY_META_COLOR = 'rgba(255,255,255,0.7)';
-
 function formatTime(dateString: string) {
   const date = new Date(dateString);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -142,7 +140,7 @@ const styles = StyleSheet.create({
   content: { ...typography.bodySmall, color: colors.text },
   myContent: { color: colors.surface },
   meta: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs, alignSelf: 'flex-end' },
-  myMeta: { color: MY_META_COLOR },
+  myMeta: { color: colors.surface, opacity: 0.7 },
   footer: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.md, backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border },
   input: { flex: 1, marginBottom: 0 },
 });
