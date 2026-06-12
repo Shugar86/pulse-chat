@@ -31,10 +31,12 @@ model Contact {
   status    ContactStatus @default(pending)
   createdAt DateTime      @default(now())
 
-  owner  User @relation("ContactOwner", fields: [ownerId], references: [id])
-  target User @relation("ContactTarget", fields: [targetId], references: [id])
+  owner  User @relation("ContactOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  target User @relation("ContactTarget", fields: [targetId], references: [id], onDelete: Cascade)
 
   @@unique([ownerId, targetId])
+  @@index([ownerId])
+  @@index([targetId])
 }
 
 enum ContactStatus {
@@ -71,6 +73,8 @@ model ChatMember {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([chatId, userId])
+  @@index([chatId])
+  @@index([userId])
 }
 
 enum MemberRole {
@@ -89,8 +93,11 @@ model Message {
   editedAt  DateTime?
 
   chat         Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  author       User          @relation(fields: [authorId], references: [id])
+  author       User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
   readReceipts ReadReceipt[]
+
+  @@index([chatId])
+  @@index([authorId])
 }
 
 enum MessageType {
@@ -109,4 +116,6 @@ model ReadReceipt {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
 }

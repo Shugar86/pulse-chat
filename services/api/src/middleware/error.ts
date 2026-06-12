@@ -3,6 +3,11 @@ import { Request, Response, NextFunction } from 'express';
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
+    this.name = 'ApiError';
+    Object.setPrototypeOf(this, ApiError.prototype);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, ApiError);
+    }
   }
 }
 
