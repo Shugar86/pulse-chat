@@ -17,15 +17,62 @@ model User {
   createdAt         DateTime @default(now())
   lastSeenAt        DateTime @default(now())
 
-  ownedContacts    Contact[]    @relation("ContactOwner")
-  targetOfContacts Contact[]    @relation("ContactTarget")
-  memberships      ChatMember[]
+  ownedContacts    Contact[]          @relation("ContactOwner")
+  targetOfContacts Contact[]          @relation("ContactTarget")
+  memberships      TenantMembership[]
+  chatMembers      ChatMember[]
   messages         Message[]
   readReceipts     ReadReceipt[]
 }
 
+model Tenant {
+  id        String             @id @default(uuid())
+  name      String
+  slug      String             @unique
+  createdAt DateTime           @default(now())
+  members   TenantMembership[]
+  contacts  Contact[]
+  chats     Chat[]
+  invites   TenantInvite[]
+}
+
+model TenantMembership {
+  id       String     @id @default(uuid())
+  tenantId String
+  userId   String
+  role     TenantRole @default(member)
+  joinedAt DateTime   @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@index([userId])
+}
+
+enum TenantRole {
+  owner
+  admin
+  member
+}
+
+model TenantInvite {
+  id        String   @id @default(uuid())
+  tenantId  String
+  code      String   @unique
+  createdBy String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
 model Contact {
   id        String        @id @default(uuid())
+  tenantId  String
   ownerId   String
   targetId  String
   status    ContactStatus @default(pending)
@@ -33,8 +80,10 @@ model Contact {
 
   owner  User @relation("ContactOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   target User @relation("ContactTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  @@unique([ownerId, targetId])
+  @@unique([tenantId, ownerId, targetId])
+  @@index([tenantId])
   @@index([ownerId])
   @@index([targetId])
 }
@@ -48,6 +97,7 @@ enum ContactStatus {
 
 model Chat {
   id        String   @id @default(uuid())
+  tenantId  String
   type      ChatType
   title     String?
   avatarUrl String?
@@ -56,6 +106,9 @@ model Chat {
 
   members  ChatMember[]
   messages Message[]
+  tenant   Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
 
 enum ChatType {
