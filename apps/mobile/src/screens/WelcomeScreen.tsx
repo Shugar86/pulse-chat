@@ -2,8 +2,9 @@ import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { AuthStackParamList } from '../navigation/types';
 
-type Props = NativeStackScreenProps<any>;
+type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
 
 export function WelcomeScreen({ navigation }: Props) {
   const { t } = useTranslation();

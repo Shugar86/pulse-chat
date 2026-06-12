@@ -7,9 +7,10 @@ import { ChatsScreen } from '../screens/ChatsScreen';
 import { ContactsScreen } from '../screens/ContactsScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { ChatScreen } from '../screens/ChatScreen';
+import type { ChatStackParamList } from './types';
 
 const Tab = createBottomTabNavigator();
-const ChatStack = createNativeStackNavigator();
+const ChatStack = createNativeStackNavigator<ChatStackParamList>();
 
 function ChatStackNavigator() {
   return (

@@ -15,6 +15,7 @@ export interface Chat {
   avatarUrl: string | null;
   updatedAt: string;
   members: ChatMember[];
+  messages?: Message[];
 }
 
 export interface ChatMember {
