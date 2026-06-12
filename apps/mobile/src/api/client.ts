@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { useAuthStore } from '../stores/authStore';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -12,14 +13,19 @@ api.interceptors.request.use(async (config) => {
 });
 
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshSubscribers: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
 
-function subscribeTokenRefresh(cb: (token: string) => void) {
+function subscribeTokenRefresh(cb: { resolve: (token: string) => void; reject: (err: any) => void }) {
   refreshSubscribers.push(cb);
 }
 
 function onRefreshed(token: string) {
-  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers.forEach((cb) => cb.resolve(token));
+  refreshSubscribers = [];
+}
+
+function onRefreshFailed(err: any) {
+  refreshSubscribers.forEach((cb) => cb.reject(err));
   refreshSubscribers = [];
 }
 
@@ -33,10 +39,13 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401) {
       if (isRefreshing) {
-        return new Promise((resolve) => {
-          subscribeTokenRefresh((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            resolve(api(originalRequest));
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh({
+            resolve: (token) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(api(originalRequest));
+            },
+            reject,
           });
         });
       }
@@ -55,6 +64,8 @@ api.interceptors.response.use(
       } catch (refreshError) {
         await SecureStore.deleteItemAsync('accessToken');
         await SecureStore.deleteItemAsync('refreshToken');
+        useAuthStore.getState().setUser(null);
+        onRefreshFailed(refreshError);
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
