@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../theme';
@@ -22,12 +22,13 @@ export function IconButton({
   backgroundColor = colors.primary,
   disabled,
 }: IconButtonProps) {
+  const buttonStyle = useMemo(
+    () => [styles.button, { backgroundColor }, disabled && styles.disabled],
+    [backgroundColor, disabled]
+  );
+
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={[styles.button, { backgroundColor }, disabled && styles.disabled]}
-    >
+    <Pressable onPress={onPress} disabled={disabled} style={buttonStyle}>
       <Ionicons name={icon} size={size} color={color} />
     </Pressable>
   );

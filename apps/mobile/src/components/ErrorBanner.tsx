@@ -13,7 +13,7 @@ export function ErrorBanner({ message, onRetry, retryTitle, style }: ErrorBanner
   return (
     <View style={[styles.container, style]}>
       <Text style={styles.message}>{message}</Text>
-      {onRetry ? <Button title={retryTitle ?? 'Retry'} onPress={onRetry} variant="ghost" fullWidth={false} style={styles.retryButton} /> : null}
+      {onRetry ? <Button title={retryTitle || 'Retry'} onPress={onRetry} variant="ghost" fullWidth={false} style={styles.retryButton} /> : null}
     </View>
   );
 }
