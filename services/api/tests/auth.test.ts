@@ -3,10 +3,12 @@ import jwt from 'jsonwebtoken';
 import { createApp } from '../src/server';
 import { prisma } from '../src/lib/prisma';
 import { config } from '../src/config';
+import { resetRateLimitWindows } from '../src/middleware/rateLimit';
 
 const app = createApp();
 
 beforeEach(async () => {
+  resetRateLimitWindows();
   await prisma.tenantInvite.deleteMany();
   await prisma.tenantMembership.deleteMany();
   await prisma.tenant.deleteMany();
@@ -115,6 +117,20 @@ describe('POST /api/auth/login', () => {
       password: 'secret123',
     });
     expect(res.status).toBe(401);
+  });
+
+  it('returns 429 after too many failed login attempts', async () => {
+    for (let i = 0; i < 10; i++) {
+      await request(app).post('/api/auth/login').send({
+        email: 'brute@example.com',
+        password: 'wrong',
+      });
+    }
+    const res = await request(app).post('/api/auth/login').send({
+      email: 'brute@example.com',
+      password: 'wrong',
+    });
+    expect(res.status).toBe(429);
   });
 });
 

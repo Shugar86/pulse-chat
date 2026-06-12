@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, TokenPayload } from '../lib/jwt.js';
 import { ApiError } from '../middleware/error.js';
 import { parseOrThrow } from '../lib/validation.js';
+import { rateLimit } from '../middleware/rateLimit.js';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -45,7 +46,10 @@ function mapMembership(m: any) {
 
 export const authRouter: Router = Router();
 
-authRouter.post('/register', async (req, res, next) => {
+authRouter.post(
+  '/register',
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 5, keyPrefix: 'register' }),
+  async (req, res, next) => {
   try {
     const data = parseOrThrow(registerSchema, req.body);
     const email = data.email.toLowerCase();
@@ -82,7 +86,10 @@ authRouter.post('/register', async (req, res, next) => {
   }
 });
 
-authRouter.post('/login', async (req, res, next) => {
+authRouter.post(
+  '/login',
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 10, keyPrefix: 'login' }),
+  async (req, res, next) => {
   try {
     const data = parseOrThrow(loginSchema, req.body);
     const email = data.email.toLowerCase();
