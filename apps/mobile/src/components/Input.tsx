@@ -16,7 +16,11 @@ export function Input({ label, error, style, ...rest }: InputProps) {
         placeholderTextColor={colors.textTertiary}
         {...rest}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? (
+        <Text style={styles.error} accessibilityRole="alert">
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }

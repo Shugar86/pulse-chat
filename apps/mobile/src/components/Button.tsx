@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { Pressable, Animated, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 import { colors, radius, typography } from '../theme';
 
@@ -17,16 +17,37 @@ interface ButtonProps {
 
 export function Button({ title, onPress, variant = 'primary', loading, disabled, fullWidth = true, style, textStyle }: ButtonProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
-  const handlePressIn = () => {
-    Animated.spring(scale, { toValue: 0.97, useNativeDriver: true, friction: 5 }).start();
-  };
+  const animateTo = useCallback((value: number) => {
+    animationRef.current?.stop();
+    animationRef.current = Animated.spring(scale, { toValue: value, useNativeDriver: true, friction: 5 });
+    animationRef.current.start();
+  }, [scale]);
 
-  const handlePressOut = () => {
-    Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 5 }).start();
-  };
+  const handlePressIn = useCallback(() => {
+    animateTo(0.97);
+  }, [animateTo]);
+
+  const handlePressOut = useCallback(() => {
+    animateTo(1);
+  }, [animateTo]);
 
   const isDisabled = disabled || loading;
+
+  useEffect(() => {
+    if (isDisabled) {
+      animationRef.current?.stop();
+      scale.setValue(1);
+    }
+  }, [isDisabled, scale]);
+
+  useEffect(() => {
+    return () => {
+      animationRef.current?.stop();
+    };
+  }, []);
+
   const containerStyle = [
     styles.base,
     variant === 'primary' && styles.primary,
