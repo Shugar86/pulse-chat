@@ -43,6 +43,7 @@ enum ContactStatus {
   pending
   accepted
   blocked
+  removed
 }
 
 model Chat {
