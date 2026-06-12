@@ -33,6 +33,10 @@
   "chatsError": "Could not load chats.",
   "messagesError": "Could not load messages.",
   "emptyChat": "No messages",
-  "emptyChatSubtitle": "Start the conversation below.",
-  "me": "Me"
+  "emptyChatSubtitle": "Write the first message — the conversation starts here.",
+  "contactStatus_pending": "Pending",
+  "contactStatus_accepted": "Accepted",
+  "contactStatus_blocked": "Blocked",
+  "accept": "Accept",
+  "remove": "Remove"
 }
