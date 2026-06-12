@@ -12,6 +12,21 @@ const readMessageEventSchema = z.object({ messageId: z.string().uuid() });
 
 const userSelect = { id: true, email: true, displayName: true, avatarUrl: true };
 
+function formatMessage(message: {
+  id: string;
+  chatId: string;
+  authorId: string;
+  type: string;
+  content: string;
+  createdAt: Date;
+  editedAt: Date | null;
+  author: { id: string; email: string; displayName: string; avatarUrl: string | null };
+  readReceipts: { userId: string; readAt: Date }[];
+}) {
+  const { readReceipts, ...rest } = message;
+  return { ...rest, readBy: readReceipts.map((r) => ({ userId: r.userId, readAt: r.readAt.toISOString() })) };
+}
+
 export function setupSocketHandlers(io: Server) {
   const onlineSockets = new Map<string, Set<string>>();
 
@@ -78,7 +93,7 @@ export function setupSocketHandlers(io: Server) {
           },
         });
         await prisma.chat.update({ where: { id: chatId }, data: {} });
-        io.to(`chat:${chatId}`).emit('message:new', message);
+        io.to(`chat:${chatId}`).emit('message:new', formatMessage(message));
       } catch (err) {
         socket.emit('error', { message: 'Invalid message:send payload' });
       }

@@ -66,7 +66,7 @@ chatsRouter.get('/:id/messages', async (req: AuthRequest, res, next) => {
   try {
     const id = z.string().uuid().parse(req.params.id);
     await assertChatMember(id, req.user!.userId);
-    const messages = await prisma.message.findMany({
+    const rawMessages = await prisma.message.findMany({
       where: { chatId: id },
       include: {
         author: { select: userSelect },
@@ -75,7 +75,11 @@ chatsRouter.get('/:id/messages', async (req: AuthRequest, res, next) => {
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
-    res.json(messages.reverse());
+    const messages = rawMessages.reverse().map((message) => {
+      const { readReceipts, ...rest } = message;
+      return { ...rest, readBy: readReceipts.map((r) => ({ userId: r.userId, readAt: r.readAt.toISOString() })) };
+    });
+    res.json(messages);
   } catch (err) {
     next(err);
   }
@@ -86,7 +90,7 @@ chatsRouter.post('/:id/messages', async (req: AuthRequest, res, next) => {
     const id = z.string().uuid().parse(req.params.id);
     const { content } = sendMessageSchema.parse(req.body);
     await assertChatMember(id, req.user!.userId);
-    const message = await prisma.message.create({
+    const rawMessage = await prisma.message.create({
       data: { chatId: id, authorId: req.user!.userId, content, type: 'text' },
       include: {
         author: { select: userSelect },
@@ -94,6 +98,8 @@ chatsRouter.post('/:id/messages', async (req: AuthRequest, res, next) => {
       },
     });
     await prisma.chat.update({ where: { id }, data: {} });
+    const { readReceipts, ...rest } = rawMessage;
+    const message = { ...rest, readBy: readReceipts.map((r) => ({ userId: r.userId, readAt: r.readAt.toISOString() })) };
     res.status(201).json(message);
   } catch (err) {
     next(err);
