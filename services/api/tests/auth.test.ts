@@ -62,7 +62,7 @@ describe('POST /api/auth/login', () => {
     });
     const res = await request(app).post('/api/auth/login').send({
       email: 'bob@example.com',
-      password: 'wrong',
+      password: 'wrongpassword',
     });
     expect(res.status).toBe(401);
   });
