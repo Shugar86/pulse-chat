@@ -1,0 +1,38 @@
+# Env
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules
+.pnpm-store
+
+# Expo / React Native
+.expo
+dist
+web-build
+*.ipa
+*.apk
+*.app
+ios/Pods
+android/.gradle
+android/app/build
+
+# Logs
+*.log
+logs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# Superpowers brainstorm artifacts
+.superpowers
+
+# TypeScript
+*.tsbuildinfo
