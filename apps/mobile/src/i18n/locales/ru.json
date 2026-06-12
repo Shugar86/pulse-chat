@@ -1,0 +1,15 @@
+{
+  "welcome": "Добро пожаловать в pulse-chat",
+  "login": "Вход",
+  "register": "Регистрация",
+  "email": "Email",
+  "password": "Пароль",
+  "displayName": "Отображаемое имя",
+  "chats": "Чаты",
+  "contacts": "Контакты",
+  "profile": "Профиль",
+  "search": "Поиск",
+  "send": "Отправить",
+  "language": "Язык",
+  "logout": "Выйти"
+}

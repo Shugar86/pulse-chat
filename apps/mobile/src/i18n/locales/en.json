@@ -1,0 +1,15 @@
+{
+  "welcome": "Welcome to pulse-chat",
+  "login": "Login",
+  "register": "Register",
+  "email": "Email",
+  "password": "Password",
+  "displayName": "Display name",
+  "chats": "Chats",
+  "contacts": "Contacts",
+  "profile": "Profile",
+  "search": "Search",
+  "send": "Send",
+  "language": "Language",
+  "logout": "Logout"
+}
