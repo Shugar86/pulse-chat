@@ -64,6 +64,8 @@ cd ../../apps/mobile
 pnpm start
 ```
 
+> Phase 1 UI polish applied — warm slate theme, consistent components, empty states, micro-animations.
+
 ## Правила для агентов
 
 См. [`AGENTS.md`](./AGENTS.md) и глобальный канон `~/dev/agent-os/AGENTS.md`.
