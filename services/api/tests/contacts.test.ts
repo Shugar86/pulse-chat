@@ -61,4 +61,43 @@ describe('Contacts', () => {
     expect(listRes.status).toBe(200);
     expect(listRes.body.length).toBe(1);
   });
+
+  it('rejects adding yourself', async () => {
+    const alice = await createUser('alice-self@example.com', 'secret123', 'Alice');
+    const res = await request(app)
+      .post('/api/contacts')
+      .set('Authorization', `Bearer ${tokenFor(alice.id, alice.email)}`)
+      .send({ targetId: alice.id });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects adding non-existent user', async () => {
+    const alice = await createUser('alice-missing@example.com', 'secret123', 'Alice');
+    const res = await request(app)
+      .post('/api/contacts')
+      .set('Authorization', `Bearer ${tokenFor(alice.id, alice.email)}`)
+      .send({ targetId: '00000000-0000-0000-0000-000000000000' });
+    expect(res.status).toBe(404);
+  });
+
+  it('rejects accepting a blocked contact', async () => {
+    const alice = await createUser('alice-block@example.com', 'secret123', 'Alice');
+    const bob = await createUser('bob-block@example.com', 'secret123', 'Bob');
+    const reqRes = await request(app)
+      .post('/api/contacts')
+      .set('Authorization', `Bearer ${tokenFor(alice.id, alice.email)}`)
+      .send({ targetId: bob.id });
+    await prisma.contact.create({
+      data: { ownerId: bob.id, targetId: alice.id, status: 'pending' },
+    });
+    await prisma.contact.update({
+      where: { ownerId_targetId: { ownerId: bob.id, targetId: alice.id } },
+      data: { status: 'blocked' },
+    });
+    const acceptRes = await request(app)
+      .patch(`/api/contacts/${reqRes.body.id}`)
+      .set('Authorization', `Bearer ${tokenFor(alice.id, alice.email)}`)
+      .send({ status: 'accepted' });
+    expect(acceptRes.status).toBe(403);
+  });
 });

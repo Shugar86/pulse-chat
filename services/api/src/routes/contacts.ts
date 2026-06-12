@@ -30,6 +30,9 @@ contactsRouter.post('/', async (req: AuthRequest, res, next) => {
     const { targetId } = z.object({ targetId: z.string().uuid() }).parse(req.body);
     if (targetId === req.user!.userId) throw new ApiError(400, 'Cannot add yourself');
 
+    const targetUser = await prisma.user.findUnique({ where: { id: targetId }, select: { id: true } });
+    if (!targetUser) throw new ApiError(404, 'Target user not found');
+
     const existing = await prisma.contact.findUnique({
       where: { ownerId_targetId: { ownerId: req.user!.userId, targetId } },
     });
@@ -47,7 +50,7 @@ contactsRouter.post('/', async (req: AuthRequest, res, next) => {
 
 contactsRouter.patch('/:id', async (req: AuthRequest, res, next) => {
   try {
-    const id = req.params.id as string;
+    const id = z.string().uuid().parse(req.params.id);
     const { status } = contactActionSchema.parse(req.body);
 
     const contact = await prisma.contact.findFirst({
@@ -70,11 +73,14 @@ contactsRouter.patch('/:id', async (req: AuthRequest, res, next) => {
       const other = await prisma.contact.findUnique({
         where: { ownerId_targetId: { ownerId: contact.targetId, targetId: contact.ownerId } },
       });
+      if (other?.status === 'blocked') {
+        throw new ApiError(403, 'Contact is blocked');
+      }
       if (!other) {
         await prisma.contact.create({
           data: { ownerId: contact.targetId, targetId: contact.ownerId, status: 'accepted' },
         });
-      } else if (other.status !== 'accepted') {
+      } else if (other.status === 'pending') {
         await prisma.contact.update({ where: { id: other.id }, data: { status: 'accepted' } });
       }
       await ensureDirectChat(contact.ownerId, contact.targetId);
