@@ -20,12 +20,14 @@ beforeAll((done) => {
   });
 });
 
-afterAll(() => {
+afterAll(async () => {
   httpServer.close();
   io.close();
+  await prisma.$disconnect();
 });
 
 beforeEach(async () => {
+  await prisma.$connect();
   await prisma.readReceipt.deleteMany();
   await prisma.message.deleteMany();
   await prisma.contact.deleteMany();
@@ -69,5 +71,32 @@ describe('Socket.io messaging', () => {
 
     bobClient.disconnect();
     aliceClient.disconnect();
+  });
+
+  it('rejects connection with invalid token', (done) => {
+    const client = Client(serverAddress, { auth: { token: 'invalid' } });
+    client.on('connect_error', () => {
+      client.disconnect();
+      done();
+    });
+  });
+
+  it('rejects sending message to chat user is not member of', async () => {
+    const alice = await createUser('alice-other@example.com', 'Alice');
+    const charlie = await createUser('charlie-other@example.com', 'Charlie');
+    const bob = await createUser('bob-other@example.com', 'Bob');
+    const chatRes = await request(app)
+      .post('/api/chats')
+      .set('Authorization', `Bearer ${signAccessToken({ userId: alice.id, email: alice.email })}`)
+      .send({ title: 'Private', memberIds: [charlie.id] });
+    const chatId = chatRes.body.id;
+
+    const bobClient = clientFor(bob.id, bob.email);
+    await new Promise<void>((resolve) => bobClient.on('connect', resolve));
+    const errorReceived = new Promise<any>((resolve) => bobClient.on('error', resolve));
+    bobClient.emit('message:send', { chatId, content: 'intrusion' });
+    const err = await errorReceived;
+    expect(err.message).toBe('Not a chat member');
+    bobClient.disconnect();
   });
 });
