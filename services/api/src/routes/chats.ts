@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
+import { requireTenant, TenantRequest } from '../middleware/tenant.js';
 import { ApiError } from '../middleware/error.js';
 
 const createGroupSchema = z.object({
@@ -17,12 +18,12 @@ const userSelect = { id: true, email: true, displayName: true, avatarUrl: true }
 
 export const chatsRouter: Router = Router();
 
-chatsRouter.use(requireAuth);
+chatsRouter.use(requireAuth, requireTenant);
 
-chatsRouter.get('/', async (req: AuthRequest, res, next) => {
+chatsRouter.get('/', async (req: TenantRequest, res, next) => {
   try {
     const chats = await prisma.chat.findMany({
-      where: { members: { some: { userId: req.user!.userId } } },
+      where: { tenantId: req.tenantId, members: { some: { userId: req.user!.userId } } },
       include: {
         members: { include: { user: { select: userSelect } } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1, include: { author: { select: userSelect } } },
@@ -35,21 +36,23 @@ chatsRouter.get('/', async (req: AuthRequest, res, next) => {
   }
 });
 
-chatsRouter.post('/', async (req: AuthRequest, res, next) => {
+chatsRouter.post('/', async (req: TenantRequest, res, next) => {
   try {
     const { title, memberIds } = createGroupSchema.parse(req.body);
 
-    const existingUsers = await prisma.user.findMany({
-      where: { id: { in: memberIds } },
-      select: { id: true },
+    const uniqueMemberIds = Array.from(new Set(memberIds));
+    const tenantMembers = await prisma.tenantMembership.findMany({
+      where: { tenantId: req.tenantId, userId: { in: uniqueMemberIds } },
+      select: { userId: true },
     });
-    if (existingUsers.length !== memberIds.length) {
-      throw new ApiError(400, 'One or more members do not exist');
+    if (tenantMembers.length !== uniqueMemberIds.length) {
+      throw new ApiError(400, 'One or more members do not exist in this tenant');
     }
 
-    const allMembers = Array.from(new Set([req.user!.userId, ...memberIds]));
+    const allMembers = Array.from(new Set([req.user!.userId, ...uniqueMemberIds]));
     const chat = await prisma.chat.create({
       data: {
+        tenantId: req.tenantId!,
         type: 'group',
         title,
         members: { create: allMembers.map((userId, idx) => ({ userId, role: idx === 0 ? 'owner' : 'member' })) },
@@ -62,10 +65,10 @@ chatsRouter.post('/', async (req: AuthRequest, res, next) => {
   }
 });
 
-chatsRouter.get('/:id/messages', async (req: AuthRequest, res, next) => {
+chatsRouter.get('/:id/messages', async (req: TenantRequest, res, next) => {
   try {
     const id = z.string().uuid().parse(req.params.id);
-    await assertChatMember(id, req.user!.userId);
+    await assertChatMember(id, req.user!.userId, req.tenantId!);
     const rawMessages = await prisma.message.findMany({
       where: { chatId: id },
       include: {
@@ -85,11 +88,11 @@ chatsRouter.get('/:id/messages', async (req: AuthRequest, res, next) => {
   }
 });
 
-chatsRouter.post('/:id/messages', async (req: AuthRequest, res, next) => {
+chatsRouter.post('/:id/messages', async (req: TenantRequest, res, next) => {
   try {
     const id = z.string().uuid().parse(req.params.id);
     const { content } = sendMessageSchema.parse(req.body);
-    await assertChatMember(id, req.user!.userId);
+    await assertChatMember(id, req.user!.userId, req.tenantId!);
     const rawMessage = await prisma.message.create({
       data: { chatId: id, authorId: req.user!.userId, content, type: 'text' },
       include: {
@@ -106,13 +109,13 @@ chatsRouter.post('/:id/messages', async (req: AuthRequest, res, next) => {
   }
 });
 
-chatsRouter.post('/messages/:messageId/read', async (req: AuthRequest, res, next) => {
+chatsRouter.post('/messages/:messageId/read', async (req: TenantRequest, res, next) => {
   try {
     const messageId = z.string().uuid().parse(req.params.messageId);
     const message = await prisma.message.findUnique({ where: { id: messageId } });
     if (!message) throw new ApiError(404, 'Message not found');
     if (message.authorId === req.user!.userId) throw new ApiError(400, 'Cannot read own message');
-    await assertChatMember(message.chatId, req.user!.userId);
+    await assertChatMember(message.chatId, req.user!.userId, req.tenantId!);
     await prisma.readReceipt.upsert({
       where: { messageId_userId: { messageId, userId: req.user!.userId } },
       create: { messageId, userId: req.user!.userId },
@@ -124,7 +127,9 @@ chatsRouter.post('/messages/:messageId/read', async (req: AuthRequest, res, next
   }
 });
 
-async function assertChatMember(chatId: string, userId: string) {
+async function assertChatMember(chatId: string, userId: string, tenantId: string) {
+  const chat = await prisma.chat.findUnique({ where: { id: chatId } });
+  if (!chat || chat.tenantId !== tenantId) throw new ApiError(403, 'Not a chat member');
   const member = await prisma.chatMember.findUnique({
     where: { chatId_userId: { chatId, userId } },
   });
