@@ -40,12 +40,28 @@ pulse-chat/
 └── docs/
 ```
 
-## Быстрый старт (будет дополняться)
+## Быстрый старт
 
-1. `pnpm install`
-2. `cp .env.example .env` и заполнить секреты
-3. `docker compose up -d` — база и Redis
-4. `pnpm --filter mobile expo start` — мобильное приложение
+```bash
+# 1. Зависимости
+pnpm install
+
+# 2. Переменные окружения
+cp .env.example .env
+# отредактируй .env, убедись что DATABASE_URL указывает на запущенный Postgres
+
+# 3. База данных
+docker compose up -d
+cd services/api
+pnpm exec prisma migrate dev
+
+# 4. Бэкенд
+pnpm dev
+
+# 5. Мобильное приложение (новое окно)
+cd ../../apps/mobile
+pnpm start
+```
 
 ## Правила для агентов
 
