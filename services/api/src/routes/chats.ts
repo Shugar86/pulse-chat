@@ -38,6 +38,15 @@ chatsRouter.get('/', async (req: AuthRequest, res, next) => {
 chatsRouter.post('/', async (req: AuthRequest, res, next) => {
   try {
     const { title, memberIds } = createGroupSchema.parse(req.body);
+
+    const existingUsers = await prisma.user.findMany({
+      where: { id: { in: memberIds } },
+      select: { id: true },
+    });
+    if (existingUsers.length !== memberIds.length) {
+      throw new ApiError(400, 'One or more members do not exist');
+    }
+
     const allMembers = Array.from(new Set([req.user!.userId, ...memberIds]));
     const chat = await prisma.chat.create({
       data: {

@@ -71,4 +71,13 @@ describe('Chats and messages', () => {
       .set('Authorization', `Bearer ${tokenFor(bob.id, bob.email)}`);
     expect(readRes.status).toBe(200);
   });
+
+  it('rejects creating a chat with non-existent member', async () => {
+    const alice = await createUser('alice-missing-member@example.com', 'secret123', 'Alice');
+    const res = await request(app)
+      .post('/api/chats')
+      .set('Authorization', `Bearer ${tokenFor(alice.id, alice.email)}`)
+      .send({ title: 'Team', memberIds: ['00000000-0000-0000-0000-000000000000'] });
+    expect(res.status).toBe(400);
+  });
 });
