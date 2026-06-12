@@ -58,6 +58,8 @@ describe('POST /api/auth/register', () => {
       tenantName: 'Acme',
     });
     expect(res.status).toBe(400);
+    expect(res.body.fields).toBeDefined();
+    expect(res.body.fields.some((f: any) => f.field === 'email')).toBe(true);
   });
 
   it('returns 400 for short password', async () => {

@@ -132,6 +132,14 @@ describe('Contacts', () => {
     expect(acceptRes.status).toBe(403);
   });
 
+  it('returns 400 when tenant header is missing', async () => {
+    const alice = await createUser('alice-no-tenant@example.com', 'secret123', 'Alice');
+    const res = await request(app)
+      .get('/api/contacts')
+      .set('Authorization', `Bearer ${alice.token}`);
+    expect(res.status).toBe(400);
+  });
+
   it('does not show contacts from another tenant', async () => {
     const alice = await createUser('alice-isolated@example.com', 'secret123', 'Alice');
     const bob = await createUser('bob-isolated@example.com', 'secret123', 'Bob');
