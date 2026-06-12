@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "pnpm -r dev",
+    "dev": "pnpm -r --if-present dev",
     "test": "pnpm -r --if-present test",
     "lint": "pnpm -r --if-present lint"
   },
