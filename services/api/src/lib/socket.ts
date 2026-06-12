@@ -30,12 +30,18 @@ function formatMessage(message: {
 export function setupSocketHandlers(io: Server) {
   const onlineSockets = new Map<string, Set<string>>();
 
-  io.use((socket: Socket, next) => {
+  io.use(async (socket: Socket, next) => {
     const token = socket.handshake.auth.token as string | undefined;
-    if (!token) return next(new Error('Unauthorized'));
+    const tenantId = socket.handshake.auth.tenantId as string | undefined;
+    if (!token || !tenantId) return next(new Error('Unauthorized'));
     try {
       const payload = verifyAccessToken(token);
+      const membership = await prisma.tenantMembership.findUnique({
+        where: { tenantId_userId: { tenantId, userId: payload.userId } },
+      });
+      if (!membership) return next(new Error('Unauthorized'));
       socket.data.userId = payload.userId;
+      socket.data.tenantId = tenantId;
       return next();
     } catch {
       return next(new Error('Unauthorized'));
@@ -44,6 +50,7 @@ export function setupSocketHandlers(io: Server) {
 
   io.on('connection', async (socket) => {
     const userId = socket.data.userId as string;
+    const tenantId = socket.data.tenantId as string;
 
     socket.join(`user:${userId}`);
 
@@ -55,6 +62,10 @@ export function setupSocketHandlers(io: Server) {
     socket.on('chat:join', async (data) => {
       try {
         const { chatId } = chatIdEventSchema.parse(data);
+        const chat = await prisma.chat.findUnique({ where: { id: chatId } });
+        if (!chat || chat.tenantId !== tenantId) {
+          return socket.emit('error', { message: 'Not a chat member' });
+        }
         const member = await prisma.chatMember.findUnique({
           where: { chatId_userId: { chatId, userId } },
         });
@@ -79,6 +90,10 @@ export function setupSocketHandlers(io: Server) {
     socket.on('message:send', async (data) => {
       try {
         const { chatId, content } = sendMessageEventSchema.parse(data);
+        const chat = await prisma.chat.findUnique({ where: { id: chatId } });
+        if (!chat || chat.tenantId !== tenantId) {
+          return socket.emit('error', { message: 'Not a chat member' });
+        }
         const member = await prisma.chatMember.findUnique({
           where: { chatId_userId: { chatId, userId } },
         });
@@ -105,6 +120,10 @@ export function setupSocketHandlers(io: Server) {
         const message = await prisma.message.findUnique({ where: { id: messageId } });
         if (!message || message.authorId === userId) {
           return socket.emit('error', { message: 'Cannot read this message' });
+        }
+        const chat = await prisma.chat.findUnique({ where: { id: message.chatId } });
+        if (!chat || chat.tenantId !== tenantId) {
+          return socket.emit('error', { message: 'Not a chat member' });
         }
         const member = await prisma.chatMember.findUnique({
           where: { chatId_userId: { chatId: message.chatId, userId } },
@@ -135,7 +154,7 @@ export function setupSocketHandlers(io: Server) {
           onlineSockets.delete(userId);
           try {
             await prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } });
-            await broadcastPresence(io, userId, false);
+            await broadcastPresence(io, userId, tenantId, false);
           } catch {
             // ignore
           }
@@ -145,7 +164,7 @@ export function setupSocketHandlers(io: Server) {
 
     if (!wasOnline) {
       try {
-        await broadcastPresence(io, userId, true);
+        await broadcastPresence(io, userId, tenantId, true);
       } catch (err) {
         socket.emit('error', { message: 'Presence update failed' });
       }
@@ -153,9 +172,10 @@ export function setupSocketHandlers(io: Server) {
   });
 }
 
-async function broadcastPresence(io: Server, userId: string, isOnline: boolean) {
+async function broadcastPresence(io: Server, userId: string, tenantId: string, isOnline: boolean) {
   const contacts = await prisma.contact.findMany({
     where: {
+      tenantId,
       ownerId: userId,
       status: 'accepted',
     },
@@ -165,6 +185,7 @@ async function broadcastPresence(io: Server, userId: string, isOnline: boolean) 
 
   const reverseContacts = await prisma.contact.findMany({
     where: {
+      tenantId,
       targetId: userId,
       status: 'accepted',
     },
