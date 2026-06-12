@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -12,6 +13,9 @@ export class ApiError extends Error {
 }
 
 export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction) {
+  if (err instanceof z.ZodError) {
+    return res.status(400).json({ error: 'Validation error', issues: err.issues });
+  }
   if (err instanceof ApiError) {
     return res.status(err.status).json({ error: err.message });
   }

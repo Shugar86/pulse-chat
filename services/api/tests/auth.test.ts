@@ -1,6 +1,8 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { createApp } from '../src/server';
 import { prisma } from '../src/lib/prisma';
+import { config } from '../src/config';
 
 const app = createApp();
 
@@ -31,11 +33,29 @@ describe('POST /api/auth/register', () => {
       displayName: 'Alice',
     });
     const res = await request(app).post('/api/auth/register').send({
-      email: 'alice@example.com',
+      email: 'Alice@Example.com',
       password: 'secret123',
       displayName: 'Alice2',
     });
     expect(res.status).toBe(409);
+  });
+
+  it('returns 400 for invalid email', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      email: 'not-an-email',
+      password: 'secret123',
+      displayName: 'Alice',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for short password', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      email: 'alice@example.com',
+      password: 'short',
+      displayName: 'Alice',
+    });
+    expect(res.status).toBe(400);
   });
 });
 
@@ -47,7 +67,7 @@ describe('POST /api/auth/login', () => {
       displayName: 'Bob',
     });
     const res = await request(app).post('/api/auth/login').send({
-      email: 'bob@example.com',
+      email: 'BOB@EXAMPLE.COM',
       password: 'secret123',
     });
     expect(res.status).toBe(200);
@@ -65,5 +85,45 @@ describe('POST /api/auth/login', () => {
       password: 'wrongpassword',
     });
     expect(res.status).toBe(401);
+  });
+
+  it('rejects non-existent email', async () => {
+    const res = await request(app).post('/api/auth/login').send({
+      email: 'nobody@example.com',
+      password: 'secret123',
+    });
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('POST /api/auth/refresh', () => {
+  it('returns a new access token', async () => {
+    const registerRes = await request(app).post('/api/auth/register').send({
+      email: 'carol@example.com',
+      password: 'secret123',
+      displayName: 'Carol',
+    });
+    const refreshToken = registerRes.body.tokens.refreshToken;
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken });
+    expect(res.status).toBe(200);
+    expect(res.body.accessToken).toBeDefined();
+  });
+
+  it('rejects invalid refresh token', async () => {
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: 'invalid' });
+    expect(res.status).toBe(401);
+  });
+});
+
+describe('JWT token contents', () => {
+  it('includes userId and email', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      email: 'dave@example.com',
+      password: 'secret123',
+      displayName: 'Dave',
+    });
+    const decoded = jwt.verify(res.body.tokens.accessToken, config.jwtAccessSecret) as { userId: string; email: string };
+    expect(decoded.email).toBe('dave@example.com');
+    expect(decoded.userId).toBe(res.body.user.id);
   });
 });
