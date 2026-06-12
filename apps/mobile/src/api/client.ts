@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { useAuthStore } from '../stores/authStore';
+import { useTenantStore } from '../stores/tenantStore';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -9,6 +10,12 @@ export const api = axios.create({ baseURL: `${API_URL}/api` });
 api.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  const activeTenantId = useTenantStore.getState().activeTenantId;
+  if (activeTenantId) {
+    config.headers.set('X-Tenant-Id', activeTenantId);
+  }
+
   return config;
 });
 
@@ -65,6 +72,7 @@ api.interceptors.response.use(
         await SecureStore.deleteItemAsync('accessToken');
         await SecureStore.deleteItemAsync('refreshToken');
         useAuthStore.getState().setUser(null);
+        await useTenantStore.getState().setActiveTenantId(null);
         onRefreshFailed(refreshError);
         return Promise.reject(refreshError);
       } finally {

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import { io, Socket } from 'socket.io-client';
 import * as SecureStore from 'expo-secure-store';
 import { useAuthStore } from '../stores/authStore';
+import { useTenantStore } from '../stores/tenantStore';
 
 const SocketContext = createContext<Socket | null>(null);
 
@@ -9,6 +10,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
   const [authResolved, setAuthResolved] = useState(false);
   const { isAuthenticated } = useAuthStore();
+  const activeTenantId = useTenantStore((state) => state.activeTenantId);
 
   useEffect(() => {
     SecureStore.getItemAsync('accessToken').then(() => {
@@ -17,7 +19,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !activeTenantId) {
       socketRef.current?.disconnect();
       socketRef.current = null;
       return;
@@ -26,7 +28,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     SecureStore.getItemAsync('accessToken').then((token) => {
       if (!token) return;
       const API_URL = (process.env as Record<string, string | undefined>).EXPO_PUBLIC_API_URL || 'http://localhost:4000';
-      const socket = io(API_URL, { auth: { token } });
+      const socket = io(API_URL, { auth: { token, tenantId: activeTenantId } });
       socketRef.current = socket;
     });
 
@@ -34,7 +36,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, activeTenantId]);
 
   return (
     <SocketContext.Provider value={socketRef.current}>

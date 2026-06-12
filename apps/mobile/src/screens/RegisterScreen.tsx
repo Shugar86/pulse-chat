@@ -17,6 +17,7 @@ export function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { setUser } = useAuthStore();
   const [displayName, setDisplayName] = useState('');
+  const [tenantName, setTenantName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,9 +25,13 @@ export function RegisterScreen({ navigation }: Props) {
 
   const handleRegister = async () => {
     setError('');
+    if (!tenantName.trim()) {
+      setError(t('tenantNameRequired'));
+      return;
+    }
     setLoading(true);
     try {
-      const { user } = await register({ email, password, displayName });
+      const { user } = await register({ email, password, displayName, tenantName });
       setUser(user);
     } catch {
       setError(t('registerFailed'));
@@ -41,6 +46,7 @@ export function RegisterScreen({ navigation }: Props) {
         <Text style={styles.title} accessibilityRole="header">{t('register')}</Text>
         {error ? <ErrorBanner message={error} style={styles.banner} /> : null}
         <Input label={t('displayName')} placeholder={t('displayName')} value={displayName} onChangeText={setDisplayName} />
+        <Input label={t('companyName')} placeholder={t('companyName')} value={tenantName} onChangeText={setTenantName} style={styles.inputGap} />
         <Input label={t('email')} placeholder={t('email')} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" style={styles.inputGap} />
         <Input label={t('password')} placeholder={t('password')} value={password} onChangeText={setPassword} secureTextEntry style={styles.inputGap} />
         <Button title={t('register')} onPress={handleRegister} loading={loading} disabled={loading} />
