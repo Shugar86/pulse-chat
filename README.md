@@ -65,6 +65,7 @@ pnpm start
 ```
 
 > Phase 1 UI polish applied — warm slate theme, consistent components, empty states, micro-animations.
+> Multitenancy MVP applied — users/companies isolated via `Tenant`/`TenantMembership`, active tenant selected on mobile and sent as `X-Tenant-Id` header / socket auth.
 
 ## Правила для агентов
 
