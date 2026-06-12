@@ -6,6 +6,21 @@ export interface User {
   preferredLanguage: 'ru' | 'en';
   createdAt: string;
   lastSeenAt: string;
+  tenants: TenantMembership[];
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface TenantMembership {
+  id: string;
+  tenantId: string;
+  userId: string;
+  role: 'owner' | 'admin' | 'member';
+  tenant: Tenant;
 }
 
 export interface Chat {
