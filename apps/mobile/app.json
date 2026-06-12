@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "pulse-chat",
+    "slug": "pulse-chat",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "pulsechat",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "chat.pulse.mobile"
+    },
+    "android": {
+      "package": "chat.pulse.mobile",
+      "adaptiveIcon": { "backgroundColor": "#1a2230" }
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}
