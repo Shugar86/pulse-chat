@@ -58,6 +58,15 @@ contactsRouter.patch('/:id', async (req: AuthRequest, res, next) => {
     });
     if (!contact) throw new ApiError(404, 'Contact not found');
 
+    if (status === 'accepted') {
+      const other = await prisma.contact.findUnique({
+        where: { ownerId_targetId: { ownerId: contact.targetId, targetId: contact.ownerId } },
+      });
+      if (other?.status === 'blocked') {
+        throw new ApiError(403, 'Contact is blocked');
+      }
+    }
+
     if (status === 'removed') {
       await prisma.contact.delete({ where: { id } });
       return res.status(204).send();
@@ -73,9 +82,6 @@ contactsRouter.patch('/:id', async (req: AuthRequest, res, next) => {
       const other = await prisma.contact.findUnique({
         where: { ownerId_targetId: { ownerId: contact.targetId, targetId: contact.ownerId } },
       });
-      if (other?.status === 'blocked') {
-        throw new ApiError(403, 'Contact is blocked');
-      }
       if (!other) {
         await prisma.contact.create({
           data: { ownerId: contact.targetId, targetId: contact.ownerId, status: 'accepted' },
