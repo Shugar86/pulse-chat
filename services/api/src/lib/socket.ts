@@ -119,6 +119,7 @@ export function setupSocketHandlers(io: Server) {
         if (sockets.size === 0) {
           onlineSockets.delete(userId);
           try {
+            await prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } });
             await broadcastPresence(io, userId, false);
           } catch {
             // ignore
@@ -129,7 +130,6 @@ export function setupSocketHandlers(io: Server) {
 
     if (!wasOnline) {
       try {
-        await prisma.user.update({ where: { id: userId }, data: { lastSeenAt: new Date() } });
         await broadcastPresence(io, userId, true);
       } catch (err) {
         socket.emit('error', { message: 'Presence update failed' });
