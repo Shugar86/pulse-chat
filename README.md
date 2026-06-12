@@ -47,8 +47,9 @@ pulse-chat/
 pnpm install
 
 # 2. Переменные окружения
-cp .env.example .env
-# отредактируй .env, убедись что DATABASE_URL указывает на запущенный Postgres
+cp .env.example .env                 # для Docker Compose
+cp .env.example services/api/.env    # для бэкенда
+# отредактируй оба файла, убедись что DATABASE_URL указывает на запущенный Postgres
 
 # 3. База данных
 docker compose up -d
