@@ -36,3 +36,8 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+services/api/dist
+services/api/coverage
+apps/mobile/dist
+apps/mobile/coverage
