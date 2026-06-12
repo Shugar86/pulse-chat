@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { requireTenant, TenantRequest } from '../middleware/tenant.js';
 import { ApiError } from '../middleware/error.js';
+import { parseOrThrow } from '../lib/validation.js';
 
 const createGroupSchema = z.object({
   title: z.string().min(1),
@@ -38,7 +39,7 @@ chatsRouter.get('/', async (req: TenantRequest, res, next) => {
 
 chatsRouter.post('/', async (req: TenantRequest, res, next) => {
   try {
-    const { title, memberIds } = createGroupSchema.parse(req.body);
+    const { title, memberIds } = parseOrThrow(createGroupSchema, req.body);
 
     const uniqueMemberIds = Array.from(new Set(memberIds));
     const tenantMembers = await prisma.tenantMembership.findMany({
@@ -67,7 +68,7 @@ chatsRouter.post('/', async (req: TenantRequest, res, next) => {
 
 chatsRouter.get('/:id/messages', async (req: TenantRequest, res, next) => {
   try {
-    const id = z.string().uuid().parse(req.params.id);
+    const id = parseOrThrow(z.string().uuid(), req.params.id);
     await assertChatMember(id, req.user!.userId, req.tenantId!);
     const rawMessages = await prisma.message.findMany({
       where: { chatId: id },
@@ -90,8 +91,8 @@ chatsRouter.get('/:id/messages', async (req: TenantRequest, res, next) => {
 
 chatsRouter.post('/:id/messages', async (req: TenantRequest, res, next) => {
   try {
-    const id = z.string().uuid().parse(req.params.id);
-    const { content } = sendMessageSchema.parse(req.body);
+    const id = parseOrThrow(z.string().uuid(), req.params.id);
+    const { content } = parseOrThrow(sendMessageSchema, req.body);
     await assertChatMember(id, req.user!.userId, req.tenantId!);
     const rawMessage = await prisma.message.create({
       data: { chatId: id, authorId: req.user!.userId, content, type: 'text' },
@@ -111,7 +112,7 @@ chatsRouter.post('/:id/messages', async (req: TenantRequest, res, next) => {
 
 chatsRouter.post('/messages/:messageId/read', async (req: TenantRequest, res, next) => {
   try {
-    const messageId = z.string().uuid().parse(req.params.messageId);
+    const messageId = parseOrThrow(z.string().uuid(), req.params.messageId);
     const message = await prisma.message.findUnique({ where: { id: messageId } });
     if (!message) throw new ApiError(404, 'Message not found');
     if (message.authorId === req.user!.userId) throw new ApiError(400, 'Cannot read own message');

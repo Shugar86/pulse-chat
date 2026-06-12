@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, TokenPayload } from '../lib/jwt.js';
 import { ApiError } from '../middleware/error.js';
+import { parseOrThrow } from '../lib/validation.js';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -46,7 +47,7 @@ export const authRouter: Router = Router();
 
 authRouter.post('/register', async (req, res, next) => {
   try {
-    const data = registerSchema.parse(req.body);
+    const data = parseOrThrow(registerSchema, req.body);
     const email = data.email.toLowerCase();
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) throw new ApiError(409, 'Email already in use');
@@ -83,7 +84,7 @@ authRouter.post('/register', async (req, res, next) => {
 
 authRouter.post('/login', async (req, res, next) => {
   try {
-    const data = loginSchema.parse(req.body);
+    const data = parseOrThrow(loginSchema, req.body);
     const email = data.email.toLowerCase();
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) throw new ApiError(401, 'Invalid credentials');
@@ -118,7 +119,7 @@ authRouter.post('/login', async (req, res, next) => {
 
 authRouter.post('/refresh', async (req, res, next) => {
   try {
-    const { refreshToken } = refreshSchema.parse(req.body);
+    const { refreshToken } = parseOrThrow(refreshSchema, req.body);
     let payload: TokenPayload;
     try {
       payload = verifyRefreshToken(refreshToken);

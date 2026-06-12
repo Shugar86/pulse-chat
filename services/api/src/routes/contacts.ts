@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { requireTenant, TenantRequest } from '../middleware/tenant.js';
 import { ApiError } from '../middleware/error.js';
+import { parseOrThrow } from '../lib/validation.js';
 
 const contactActionSchema = z.object({
   status: z.enum(['accepted', 'blocked', 'removed']),
@@ -30,7 +31,7 @@ contactsRouter.get('/', async (req: TenantRequest, res, next) => {
 
 contactsRouter.post('/', async (req: TenantRequest, res, next) => {
   try {
-    const { targetId } = z.object({ targetId: z.string().uuid() }).parse(req.body);
+    const { targetId } = parseOrThrow(z.object({ targetId: z.string().uuid() }), req.body);
     if (targetId === req.user!.userId) throw new ApiError(400, 'Cannot add yourself');
 
     const targetMembership = await prisma.tenantMembership.findUnique({
@@ -55,8 +56,8 @@ contactsRouter.post('/', async (req: TenantRequest, res, next) => {
 
 contactsRouter.patch('/:id', async (req: TenantRequest, res, next) => {
   try {
-    const id = z.string().uuid().parse(req.params.id);
-    const { status } = contactActionSchema.parse(req.body);
+    const id = parseOrThrow(z.string().uuid(), req.params.id);
+    const { status } = parseOrThrow(contactActionSchema, req.body);
 
     const contact = await prisma.contact.findFirst({
       where: { id, tenantId: req.tenantId, ownerId: req.user!.userId },

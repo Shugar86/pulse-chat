@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { ApiError } from '../middleware/error.js';
+import { parseOrThrow } from '../lib/validation.js';
 
 function slugify(name: string) {
   return name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 50) || 'tenant';
@@ -47,7 +48,7 @@ tenantsRouter.get('/', async (req: AuthRequest, res, next) => {
 
 tenantsRouter.post('/', async (req: AuthRequest, res, next) => {
   try {
-    const { name } = z.object({ name: z.string().min(1) }).parse(req.body);
+    const { name } = parseOrThrow(z.object({ name: z.string().min(1) }), req.body);
     const slug = await uniqueSlug(name);
     const result = await prisma.$transaction(async (tx) => {
       const tenant = await tx.tenant.create({ data: { name, slug }, select: tenantSelect });
@@ -65,7 +66,7 @@ tenantsRouter.post('/', async (req: AuthRequest, res, next) => {
 
 tenantsRouter.post('/join', async (req: AuthRequest, res, next) => {
   try {
-    const { code } = z.object({ code: z.string().min(1) }).parse(req.body);
+    const { code } = parseOrThrow(z.object({ code: z.string().min(1) }), req.body);
     const invite = await prisma.tenantInvite.findUnique({ where: { code: code.toUpperCase() } });
     if (!invite) throw new ApiError(404, 'Invite not found');
     if (invite.expiresAt < new Date()) throw new ApiError(410, 'Invite expired');
@@ -87,7 +88,7 @@ tenantsRouter.post('/join', async (req: AuthRequest, res, next) => {
 
 tenantsRouter.post('/:id/invites', async (req: AuthRequest, res, next) => {
   try {
-    const tenantId = z.string().uuid().parse(req.params.id);
+    const tenantId = parseOrThrow(z.string().uuid(), req.params.id);
     const membership = await prisma.tenantMembership.findUnique({
       where: { tenantId_userId: { tenantId, userId: req.user!.userId } },
     });

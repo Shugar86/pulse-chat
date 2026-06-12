@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
 import { requireTenant, TenantRequest } from '../middleware/tenant.js';
+import { parseOrThrow } from '../lib/validation.js';
 
 const updateProfileSchema = z.object({
   displayName: z.string().min(1).optional(),
@@ -45,7 +46,7 @@ usersRouter.get('/me', async (req: AuthRequest, res, next) => {
 
 usersRouter.patch('/me', async (req: AuthRequest, res, next) => {
   try {
-    const data = updateProfileSchema.parse(req.body);
+    const data = parseOrThrow(updateProfileSchema, req.body);
     const user = await prisma.user.update({
       where: { id: req.user!.userId },
       data,
@@ -71,7 +72,7 @@ usersRouter.patch('/me', async (req: AuthRequest, res, next) => {
 
 usersRouter.get('/search', requireTenant, async (req: TenantRequest, res, next) => {
   try {
-    const q = z.string().min(1).parse(req.query.q);
+    const q = parseOrThrow(z.string().min(1), req.query.q);
     const users = await prisma.user.findMany({
       where: {
         id: { not: req.user!.userId },
