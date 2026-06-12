@@ -41,3 +41,9 @@ services/api/dist
 services/api/coverage
 apps/mobile/dist
 apps/mobile/coverage
+
+# Build outputs
+.next
+.turbo
+build
+coverage

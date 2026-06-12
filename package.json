@@ -5,8 +5,8 @@
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "pnpm -r dev",
-    "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
+    "test": "pnpm -r --if-present test",
+    "lint": "pnpm -r --if-present lint"
   },
   "devDependencies": {
     "typescript": "^5.7.2"
