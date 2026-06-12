@@ -33,35 +33,52 @@ beforeEach(async () => {
   await prisma.contact.deleteMany();
   await prisma.chatMember.deleteMany();
   await prisma.chat.deleteMany();
+  await prisma.tenantInvite.deleteMany();
+  await prisma.tenantMembership.deleteMany();
+  await prisma.tenant.deleteMany();
   await prisma.user.deleteMany();
 });
 
 async function createUser(email: string, displayName: string) {
-  const res = await request(app).post('/api/auth/register').send({ email, password: 'secret123', displayName });
-  return res.body.user as { id: string; email: string };
+  const res = await request(app)
+    .post('/api/auth/register')
+    .send({ email, password: 'secret123', displayName, tenantName: displayName });
+  const tenantId = res.body.user.tenants[0].tenantId as string;
+  return {
+    user: res.body.user as { id: string; email: string },
+    tenantId,
+    token: res.body.tokens.accessToken as string,
+  };
 }
 
-function clientFor(userId: string, email: string) {
-  return Client(serverAddress, { auth: { token: signAccessToken({ userId, email }) } });
+function clientFor(userId: string, email: string, tenantId: string) {
+  return Client(serverAddress, {
+    auth: { token: signAccessToken({ userId, email }), tenantId },
+  });
 }
 
 describe('Socket.io messaging', () => {
   it('delivers message:new to joined room', async () => {
     const alice = await createUser('alice@example.com', 'Alice');
     const bob = await createUser('bob@example.com', 'Bob');
+    await prisma.tenantMembership.create({
+      data: { tenantId: alice.tenantId, userId: bob.user.id, role: 'member' },
+    });
+
     const chatRes = await request(app)
       .post('/api/chats')
-      .set('Authorization', `Bearer ${signAccessToken({ userId: alice.id, email: alice.email })}`)
-      .send({ title: 'Room', memberIds: [bob.id] });
+      .set('Authorization', `Bearer ${alice.token}`)
+      .set('X-Tenant-Id', alice.tenantId)
+      .send({ title: 'Room', memberIds: [bob.user.id] });
     const chatId = chatRes.body.id;
 
-    const bobClient = clientFor(bob.id, bob.email);
+    const bobClient = clientFor(bob.user.id, bob.user.email, alice.tenantId);
     await new Promise<void>((resolve) => bobClient.on('connect', resolve));
     bobClient.emit('chat:join', { chatId });
 
     const received = new Promise<any>((resolve) => bobClient.on('message:new', resolve));
 
-    const aliceClient = clientFor(alice.id, alice.email);
+    const aliceClient = clientFor(alice.user.id, alice.user.email, alice.tenantId);
     await new Promise<void>((resolve) => aliceClient.on('connect', resolve));
     aliceClient.emit('chat:join', { chatId });
     aliceClient.emit('message:send', { chatId, content: 'hi' });
@@ -73,8 +90,16 @@ describe('Socket.io messaging', () => {
     aliceClient.disconnect();
   });
 
+  it('rejects connection without tenantId', (done) => {
+    const client = Client(serverAddress, { auth: { token: signAccessToken({ userId: 'any', email: 'any@example.com' }) } });
+    client.on('connect_error', () => {
+      client.disconnect();
+      done();
+    });
+  });
+
   it('rejects connection with invalid token', (done) => {
-    const client = Client(serverAddress, { auth: { token: 'invalid' } });
+    const client = Client(serverAddress, { auth: { token: 'invalid', tenantId: 'any' } });
     client.on('connect_error', () => {
       client.disconnect();
       done();
@@ -85,13 +110,21 @@ describe('Socket.io messaging', () => {
     const alice = await createUser('alice-other@example.com', 'Alice');
     const charlie = await createUser('charlie-other@example.com', 'Charlie');
     const bob = await createUser('bob-other@example.com', 'Bob');
+    await prisma.tenantMembership.create({
+      data: { tenantId: alice.tenantId, userId: charlie.user.id, role: 'member' },
+    });
+    await prisma.tenantMembership.create({
+      data: { tenantId: alice.tenantId, userId: bob.user.id, role: 'member' },
+    });
+
     const chatRes = await request(app)
       .post('/api/chats')
-      .set('Authorization', `Bearer ${signAccessToken({ userId: alice.id, email: alice.email })}`)
-      .send({ title: 'Private', memberIds: [charlie.id] });
+      .set('Authorization', `Bearer ${alice.token}`)
+      .set('X-Tenant-Id', alice.tenantId)
+      .send({ title: 'Private', memberIds: [charlie.user.id] });
     const chatId = chatRes.body.id;
 
-    const bobClient = clientFor(bob.id, bob.email);
+    const bobClient = clientFor(bob.user.id, bob.user.email, alice.tenantId);
     await new Promise<void>((resolve) => bobClient.on('connect', resolve));
     const errorReceived = new Promise<any>((resolve) => bobClient.on('error', resolve));
     bobClient.emit('message:send', { chatId, content: 'intrusion' });

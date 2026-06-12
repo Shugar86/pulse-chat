@@ -7,6 +7,9 @@ import { config } from '../src/config';
 const app = createApp();
 
 beforeEach(async () => {
+  await prisma.tenantInvite.deleteMany();
+  await prisma.tenantMembership.deleteMany();
+  await prisma.tenant.deleteMany();
   await prisma.user.deleteMany();
 });
 
@@ -15,14 +18,17 @@ afterAll(async () => {
 });
 
 describe('POST /api/auth/register', () => {
-  it('creates a user and returns tokens', async () => {
+  it('creates a user, tenant and returns tokens', async () => {
     const res = await request(app).post('/api/auth/register').send({
       email: 'alice@example.com',
       password: 'secret123',
       displayName: 'Alice',
+      tenantName: 'Acme',
     });
     expect(res.status).toBe(201);
     expect(res.body.user.email).toBe('alice@example.com');
+    expect(res.body.user.tenants.length).toBe(1);
+    expect(res.body.user.tenants[0].role).toBe('owner');
     expect(res.body.tokens.accessToken).toBeDefined();
   });
 
@@ -31,11 +37,13 @@ describe('POST /api/auth/register', () => {
       email: 'alice@example.com',
       password: 'secret123',
       displayName: 'Alice',
+      tenantName: 'Acme',
     });
     const res = await request(app).post('/api/auth/register').send({
       email: 'Alice@Example.com',
       password: 'secret123',
       displayName: 'Alice2',
+      tenantName: 'Acme2',
     });
     expect(res.status).toBe(409);
   });
@@ -45,6 +53,7 @@ describe('POST /api/auth/register', () => {
       email: 'not-an-email',
       password: 'secret123',
       displayName: 'Alice',
+      tenantName: 'Acme',
     });
     expect(res.status).toBe(400);
   });
@@ -53,6 +62,16 @@ describe('POST /api/auth/register', () => {
     const res = await request(app).post('/api/auth/register').send({
       email: 'alice@example.com',
       password: 'short',
+      displayName: 'Alice',
+      tenantName: 'Acme',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 for missing tenant name', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      email: 'alice@example.com',
+      password: 'secret123',
       displayName: 'Alice',
     });
     expect(res.status).toBe(400);
@@ -65,6 +84,7 @@ describe('POST /api/auth/login', () => {
       email: 'bob@example.com',
       password: 'secret123',
       displayName: 'Bob',
+      tenantName: 'Acme',
     });
     const res = await request(app).post('/api/auth/login').send({
       email: 'BOB@EXAMPLE.COM',
@@ -72,6 +92,7 @@ describe('POST /api/auth/login', () => {
     });
     expect(res.status).toBe(200);
     expect(res.body.tokens.accessToken).toBeDefined();
+    expect(res.body.user.tenants.length).toBe(1);
   });
 
   it('rejects invalid password', async () => {
@@ -79,6 +100,7 @@ describe('POST /api/auth/login', () => {
       email: 'bob@example.com',
       password: 'secret123',
       displayName: 'Bob',
+      tenantName: 'Acme',
     });
     const res = await request(app).post('/api/auth/login').send({
       email: 'bob@example.com',
@@ -102,6 +124,7 @@ describe('POST /api/auth/refresh', () => {
       email: 'carol@example.com',
       password: 'secret123',
       displayName: 'Carol',
+      tenantName: 'Acme',
     });
     const refreshToken = registerRes.body.tokens.refreshToken;
     const res = await request(app).post('/api/auth/refresh').send({ refreshToken });
@@ -121,6 +144,7 @@ describe('JWT token contents', () => {
       email: 'dave@example.com',
       password: 'secret123',
       displayName: 'Dave',
+      tenantName: 'Acme',
     });
     const decoded = jwt.verify(res.body.tokens.accessToken, config.jwtAccessSecret) as { userId: string; email: string };
     expect(decoded.email).toBe('dave@example.com');
