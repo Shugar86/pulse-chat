@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import type { User } from '@pulse-chat/shared';
 import { useAuthStore } from '../stores/authStore';
 import { useTenantStore } from '../stores/tenantStore';
+import { queryClient } from '../lib/queryClient';
 
 export interface AuthResponse {
   user: User;
@@ -40,4 +41,5 @@ export async function logout() {
   await SecureStore.deleteItemAsync('refreshToken');
   useAuthStore.getState().setUser(null);
   await useTenantStore.getState().setActiveTenantId(null);
+  queryClient.clear();
 }

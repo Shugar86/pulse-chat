@@ -6,6 +6,7 @@ import { useTenantStore } from '../stores/tenantStore';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { TenantNavigator } from './TenantNavigator';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { api } from '../api/client';
 import { colors } from '../theme';
 
@@ -51,7 +52,9 @@ export function AppNavigator() {
     );
   }
 
-  if (!user) return <AuthNavigator />;
-  if (!activeTenantId) return <TenantNavigator />;
-  return <MainNavigator />;
+  return (
+    <ErrorBoundary>
+      {!user ? <AuthNavigator /> : !activeTenantId ? <TenantNavigator /> : <MainNavigator />}
+    </ErrorBoundary>
+  );
 }

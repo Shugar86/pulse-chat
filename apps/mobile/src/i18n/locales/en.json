@@ -66,5 +66,9 @@
   "inviteCreateFailed": "Could not create invite code.",
   "create": "Create",
   "join": "Join",
-  "back": "Back"
+  "back": "Back",
+  "required": "This field is required",
+  "invalidEmail": "Enter a valid email",
+  "minLength": "Must be at least {{min}} characters",
+  "offline": "No internet connection"
 }

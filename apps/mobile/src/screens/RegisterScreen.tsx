@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { register } from '../api/auth';
 import { useAuthStore } from '../stores/authStore';
+import { useForm } from '../hooks/useForm';
+import { validators } from '../lib/validation';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Card } from '../components/Card';
@@ -16,22 +18,29 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 export function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { setUser } = useAuthStore();
-  const [displayName, setDisplayName] = useState('');
-  const [tenantName, setTenantName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { values, errors, setValue, blur, isValid } = useForm(
+    { displayName: '', tenantName: '', email: '', password: '' },
+    {
+      displayName: [validators.required],
+      tenantName: [validators.required],
+      email: [validators.required, validators.email],
+      password: [validators.required, validators.minLength(6)],
+    }
+  );
 
   const handleRegister = async () => {
     setError('');
-    if (!tenantName.trim()) {
-      setError(t('tenantNameRequired'));
-      return;
-    }
+    if (!isValid) return;
     setLoading(true);
     try {
-      const { user } = await register({ email, password, displayName, tenantName });
+      const { user } = await register({
+        email: values.email,
+        password: values.password,
+        displayName: values.displayName,
+        tenantName: values.tenantName,
+      });
       setUser(user);
     } catch {
       setError(t('registerFailed'));
@@ -45,11 +54,45 @@ export function RegisterScreen({ navigation }: Props) {
       <Card style={styles.card}>
         <Text style={styles.title} accessibilityRole="header">{t('register')}</Text>
         {error ? <ErrorBanner message={error} style={styles.banner} /> : null}
-        <Input label={t('displayName')} placeholder={t('displayName')} value={displayName} onChangeText={setDisplayName} />
-        <Input label={t('companyName')} placeholder={t('companyName')} value={tenantName} onChangeText={setTenantName} style={styles.inputGap} />
-        <Input label={t('email')} placeholder={t('email')} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" style={styles.inputGap} />
-        <Input label={t('password')} placeholder={t('password')} value={password} onChangeText={setPassword} secureTextEntry style={styles.inputGap} />
-        <Button title={t('register')} onPress={handleRegister} loading={loading} disabled={loading} />
+        <Input
+          label={t('displayName')}
+          placeholder={t('displayName')}
+          value={values.displayName}
+          onChangeText={(value) => setValue('displayName', value)}
+          onBlur={() => blur('displayName')}
+          error={errors.displayName ? t(errors.displayName) : undefined}
+        />
+        <Input
+          label={t('companyName')}
+          placeholder={t('companyName')}
+          value={values.tenantName}
+          onChangeText={(value) => setValue('tenantName', value)}
+          onBlur={() => blur('tenantName')}
+          style={styles.inputGap}
+          error={errors.tenantName ? t(errors.tenantName) : undefined}
+        />
+        <Input
+          label={t('email')}
+          placeholder={t('email')}
+          value={values.email}
+          onChangeText={(value) => setValue('email', value)}
+          onBlur={() => blur('email')}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          style={styles.inputGap}
+          error={errors.email ? t(errors.email) : undefined}
+        />
+        <Input
+          label={t('password')}
+          placeholder={t('password')}
+          value={values.password}
+          onChangeText={(value) => setValue('password', value)}
+          onBlur={() => blur('password')}
+          secureTextEntry
+          style={styles.inputGap}
+          error={errors.password ? t(errors.password) : undefined}
+        />
+        <Button title={t('register')} onPress={handleRegister} loading={loading} disabled={loading || !isValid} />
         <Button title={t('haveAccount')} onPress={() => navigation.navigate('Login')} variant="ghost" fullWidth={false} style={styles.link} />
       </Card>
     </View>

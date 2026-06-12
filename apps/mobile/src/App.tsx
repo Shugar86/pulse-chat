@@ -1,18 +1,19 @@
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './i18n';
 import { AppNavigator } from './navigation/AppNavigator';
 import { SocketProvider } from './context/SocketContext';
-
-const queryClient = new QueryClient();
+import { OfflineBanner } from './components/OfflineBanner';
+import { queryClient } from './lib/queryClient';
 
 export default function App() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <NavigationContainer>
+          <OfflineBanner />
           <SocketProvider>
             <AppNavigator />
           </SocketProvider>

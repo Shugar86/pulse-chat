@@ -5,6 +5,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { createTenant } from '../api/tenants';
 import { useTenantStore } from '../stores/tenantStore';
+import { useForm } from '../hooks/useForm';
+import { validators } from '../lib/validation';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Card } from '../components/Card';
@@ -18,8 +20,11 @@ export function CreateTenantScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { setActiveTenantId } = useTenantStore();
   const queryClient = useQueryClient();
-  const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const { values, errors, setValue, blur, isValid } = useForm(
+    { name: '' },
+    { name: [validators.required] }
+  );
 
   const mutation = useMutation({
     mutationFn: createTenant,
@@ -34,11 +39,8 @@ export function CreateTenantScreen({ navigation }: Props) {
 
   const handleSubmit = () => {
     setError('');
-    if (!name.trim()) {
-      setError(t('tenantNameRequired'));
-      return;
-    }
-    mutation.mutate(name.trim());
+    if (!isValid) return;
+    mutation.mutate(values.name.trim());
   };
 
   return (
@@ -49,12 +51,14 @@ export function CreateTenantScreen({ navigation }: Props) {
         <Input
           label={t('companyName')}
           placeholder={t('companyName')}
-          value={name}
-          onChangeText={setName}
+          value={values.name}
+          onChangeText={(value) => setValue('name', value)}
+          onBlur={() => blur('name')}
           autoFocus
+          error={errors.name ? t(errors.name) : undefined}
         />
         <View style={styles.gap} />
-        <Button title={t('create')} onPress={handleSubmit} loading={mutation.isPending} disabled={mutation.isPending} />
+        <Button title={t('create')} onPress={handleSubmit} loading={mutation.isPending} disabled={mutation.isPending || !isValid} />
         <View style={styles.gap} />
         <Button title={t('back')} onPress={() => navigation.goBack()} variant="ghost" />
       </Card>

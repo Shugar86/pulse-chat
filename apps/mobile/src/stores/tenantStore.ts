@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Tenant, TenantMembership } from '@pulse-chat/shared';
+import { queryClient } from '../lib/queryClient';
 
 const ACTIVE_TENANT_KEY = '@pulse-chat/activeTenantId';
 
@@ -20,6 +21,7 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     } else {
       await AsyncStorage.removeItem(ACTIVE_TENANT_KEY);
     }
+    queryClient.clear();
   },
 
   initializeTenant: async (memberships) => {
