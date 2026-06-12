@@ -8,7 +8,7 @@ interface BadgeProps {
 }
 
 export function Badge({ count, text }: BadgeProps) {
-  if (count !== undefined && count <= 0) return null;
+  if (text === undefined && count !== undefined && count <= 0) return null;
   const label = text ?? (count && count > 99 ? '99+' : String(count ?? ''));
   if (!label) return null;
   return (

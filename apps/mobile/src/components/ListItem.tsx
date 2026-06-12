@@ -18,8 +18,14 @@ export function ListItem({ title, subtitle, avatarUri, avatarName, trailing, onP
   const translateY = useRef(new Animated.Value(8)).current;
 
   useEffect(() => {
-    Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-    Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+    const opacityAnim = Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true });
+    const translateAnim = Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true });
+    opacityAnim.start();
+    translateAnim.start();
+    return () => {
+      opacityAnim.stop();
+      translateAnim.stop();
+    };
   }, []);
 
   const content = (

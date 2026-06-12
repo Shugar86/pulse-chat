@@ -6,7 +6,7 @@ type Size = 'sm' | 'md' | 'lg';
 
 interface AvatarProps {
   uri?: string | null;
-  name: string;
+  name?: string;
   size?: Size;
   online?: boolean;
 }
@@ -14,15 +14,16 @@ interface AvatarProps {
 const sizeMap = { sm: 36, md: 44, lg: 72 };
 const fontMap = { sm: 14, md: 16, lg: 28 };
 
-export function Avatar({ uri, name, size = 'md', online }: AvatarProps) {
+export function Avatar({ uri, name = '?', size = 'md', online }: AvatarProps) {
   const diameter = sizeMap[size];
   const fontSize = fontMap[size];
   const initials = name
+    .trim()
     .split(' ')
     .slice(0, 2)
-    .map((n) => n[0])
+    .map((n) => n[0] || '')
     .join('')
-    .toUpperCase();
+    .toUpperCase() || '?';
 
   return (
     <View style={[styles.wrapper, { width: diameter, height: diameter }]}>
