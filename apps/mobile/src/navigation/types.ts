@@ -15,3 +15,8 @@ export type ChatStackParamList = {
   ChatsList: undefined;
   Chat: { chatId: string; title: string };
 };
+
+export type MainStackParamList = {
+  MainTabs: undefined;
+  Call: { userId: string; displayName: string };
+};

@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, FlatList, RefreshControl, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { listContacts, searchUsers, addContact, updateContact, type Contact, type User } from '../api/contacts';
 import { Input } from '../components/Input';
@@ -11,11 +12,16 @@ import { EmptyState } from '../components/EmptyState';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { Skeleton } from '../components/Skeleton';
 import { colors, spacing, radius } from '../theme';
+import type { MainStackParamList } from '../navigation/types';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type NavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
 const skeletonData = () => Array.from({ length: 6 }, (_, i) => `skeleton-${i}`);
 
 export function ContactsScreen() {
   const { t } = useTranslation();
+  const navigation = useNavigation<NavigationProp>();
   const [query, setQuery] = useState('');
   const queryClient = useQueryClient();
   const { data: contacts, isLoading: contactsLoading, isError: contactsError, refetch } = useQuery({ queryKey: ['contacts'], queryFn: listContacts });
@@ -54,6 +60,10 @@ export function ContactsScreen() {
       avatarName={item.target.displayName}
       trailing={
         <View style={styles.actions}>
+          <IconButton
+            icon="call"
+            onPress={() => navigation.navigate('Call', { userId: item.target.id, displayName: item.target.displayName })}
+          />
           {item.status === 'pending' ? (
             <Button
               title={t('accept')}

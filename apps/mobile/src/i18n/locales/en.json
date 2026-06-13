@@ -84,5 +84,11 @@
   "endpoint": "Endpoint",
   "cancel": "Cancel",
   "delete": "Delete",
-  "noVpnConfig": "No VPN config found"
+  "noVpnConfig": "No VPN config found",
+  "calling": "Calling...",
+  "incomingCall": "Incoming call",
+  "callInProgress": "Call in progress",
+  "accept": "Accept",
+  "decline": "Decline",
+  "hangUp": "Hang up"
 }

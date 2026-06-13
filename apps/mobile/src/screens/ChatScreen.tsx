@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, FlatList, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { NativeStackScreenProps, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { listMessages, sendMessage, readMessage } from '../api/chats';
 import { useSocket } from '../context/SocketContext';
 import { useAuthStore } from '../stores/authStore';
@@ -13,7 +14,7 @@ import { Avatar } from '../components/Avatar';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorBanner } from '../components/ErrorBanner';
 import { colors, radius, spacing, typography } from '../theme';
-import type { ChatStackParamList } from '../navigation/types';
+import type { ChatStackParamList, MainStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<ChatStackParamList, 'Chat'>;
 
@@ -46,12 +47,17 @@ function MessageBubble({ item, currentUserId }: MessageBubbleProps) {
 export function ChatScreen({ route }: Props) {
   const { chatId, title } = route.params;
   const { t } = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { user } = useAuthStore();
   const socket = useSocket();
   const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const flatListRef = useRef<FlatList>(null);
   const { data: messages, isPending, isError, refetch } = useQuery({ queryKey: ['messages', chatId], queryFn: () => listMessages(chatId) });
+  const otherUserId = useMemo(() => {
+    if (!user?.id || !messages) return undefined;
+    return messages.find((m) => m.authorId !== user.id)?.authorId;
+  }, [messages, user?.id]);
 
   const sendMutation = useMutation({
     mutationFn: (content: string) => sendMessage(chatId, content),
@@ -98,6 +104,12 @@ export function ChatScreen({ route }: Props) {
       <View style={styles.header}>
         <Avatar name={title || t('unknown')} size="sm" />
         <Text style={styles.headerTitle} numberOfLines={1}>{title || t('unknown')}</Text>
+        {otherUserId ? (
+          <IconButton
+            icon="call"
+            onPress={() => navigation.navigate('Call', { userId: otherUserId, displayName: title })}
+          />
+        ) : null}
       </View>
 
       {isError ? <ErrorBanner message={t('messagesError')} onRetry={refetch} retryTitle={t('retry')} style={styles.banner} /> : null}

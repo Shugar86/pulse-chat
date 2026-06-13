@@ -84,5 +84,11 @@
   "endpoint": "Конечная точка",
   "cancel": "Отмена",
   "delete": "Удалить",
-  "noVpnConfig": "Конфигурация VPN не найдена"
+  "noVpnConfig": "Конфигурация VPN не найдена",
+  "calling": "Звоним...",
+  "incomingCall": "Входящий звонок",
+  "callInProgress": "Разговор",
+  "accept": "Принять",
+  "decline": "Отклонить",
+  "hangUp": "Завершить"
 }
