@@ -16,12 +16,17 @@
     },
     "android": {
       "package": "chat.pulse.mobile",
-      "permissions": ["android.permission.RECORD_AUDIO"],
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
       "adaptiveIcon": { "backgroundColor": "#1a2230" }
     },
     "plugins": [
       "expo-secure-store",
-      ["react-native-wireguard-vpn", {}]
+      ["react-native-wireguard-vpn", {}],
+      ["expo-notifications", {}]
     ]
   }
 }

@@ -91,5 +91,6 @@
   "callInProgress": "Разговор",
   "accept": "Принять",
   "decline": "Отклонить",
-  "hangUp": "Завершить"
+  "hangUp": "Завершить",
+  "incomingCallNotification": "Входящий звонок"
 }

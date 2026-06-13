@@ -91,5 +91,6 @@
   "callInProgress": "Call in progress",
   "accept": "Accept",
   "decline": "Decline",
-  "hangUp": "Hang up"
+  "hangUp": "Hang up",
+  "incomingCallNotification": "Incoming call"
 }
