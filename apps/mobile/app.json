@@ -8,11 +8,15 @@
     "scheme": "pulsechat",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "chat.pulse.mobile",
       "supportsTablet": true,
-      "bundleIdentifier": "chat.pulse.mobile"
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Pulse Chat uses the microphone for audio calls."
+      }
     },
     "android": {
       "package": "chat.pulse.mobile",
+      "permissions": ["android.permission.RECORD_AUDIO"],
       "adaptiveIcon": { "backgroundColor": "#1a2230" }
     },
     "plugins": [
