@@ -79,5 +79,10 @@
   "disconnectVpn": "Disconnect VPN",
   "vpnError": "VPN error",
   "deleteVpnConfirm": "Delete VPN config?",
-  "deleteVpnSubtitle": "You will need to reconnect afterwards."
+  "deleteVpnSubtitle": "You will need to reconnect afterwards.",
+  "address": "Address",
+  "endpoint": "Endpoint",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "noVpnConfig": "No VPN config found"
 }

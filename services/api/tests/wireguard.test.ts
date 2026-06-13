@@ -34,4 +34,19 @@ describe('wireguard library', () => {
     expect(conf).toContain('PrivateKey = aGVsbG8=');
     expect(conf).toContain('Endpoint = vpn.example.com:51820');
   });
+
+  it('renders a config without PrivateKey when privateKey is omitted', () => {
+    const conf = generateClientConfig({
+      address: '10.200.0.2/32',
+      dns: '1.1.1.1',
+      serverPublicKey: 'c2VydmVyLWtleQ==',
+      allowedIps: '0.0.0.0/0',
+      endpoint: 'vpn.example.com:51820',
+    });
+    expect(conf).toContain('[Interface]');
+    expect(conf).toContain('[Peer]');
+    expect(conf).not.toContain('PrivateKey =');
+    expect(conf).toContain('Address = 10.200.0.2/32');
+    expect(conf).toContain('Endpoint = vpn.example.com:51820');
+  });
 });

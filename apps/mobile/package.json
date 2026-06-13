@@ -32,6 +32,7 @@
     "react-native-screens": "~4.4.0",
     "react-native-wireguard-vpn": "^1.0.22",
     "socket.io-client": "^4.8.1",
+    "tweetnacl": "^1.0.3",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

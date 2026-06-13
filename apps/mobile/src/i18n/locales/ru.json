@@ -79,5 +79,10 @@
   "disconnectVpn": "Отключить VPN",
   "vpnError": "Ошибка VPN",
   "deleteVpnConfirm": "Удалить конфиг VPN?",
-  "deleteVpnSubtitle": "После удаления потребуется повторное подключение."
+  "deleteVpnSubtitle": "После удаления потребуется повторное подключение.",
+  "address": "Адрес",
+  "endpoint": "Конечная точка",
+  "cancel": "Отмена",
+  "delete": "Удалить",
+  "noVpnConfig": "Конфигурация VPN не найдена"
 }

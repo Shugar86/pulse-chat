@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Button } from './Button';
 import { useVpn } from '../hooks/useVpn';
 import { connectVpn, disconnectVpn, getVpnStatus } from '../lib/nativeVpn';
+import { generateKeyPair } from '../lib/wireguard';
+import { colors, spacing, radius, shadows, typography } from '../theme';
 
 export function VpnCard() {
+  const { t } = useTranslation();
   const { config, isLoading, error, create, remove } = useVpn();
   const [connected, setConnected] = useState(false);
 
@@ -15,18 +19,19 @@ export function VpnCard() {
   }, [config?.id]);
 
   const handleCreate = () => {
-    create.mutate(undefined, {
+    const keys = generateKeyPair();
+    create.mutate(keys.publicKey, {
       onError: (err: any) => {
-        Alert.alert('VPN error', err?.response?.data?.error || err.message);
+        Alert.alert(t('vpnError'), err?.response?.data?.error || err.message);
       },
     });
   };
 
   const handleDelete = () => {
-    Alert.alert('Delete VPN config?', 'You will need to reconnect afterwards.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('deleteVpnConfirm'), t('deleteVpnSubtitle'), [
+      { text: t('cancel', 'Cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('delete', 'Delete'),
         style: 'destructive',
         onPress: () => remove.mutate(),
       },
@@ -35,21 +40,21 @@ export function VpnCard() {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Corporate VPN</Text>
-      {isLoading && <ActivityIndicator />}
+      <Text style={styles.title}>{t('vpn')}</Text>
+      {isLoading && <ActivityIndicator color={colors.primary} />}
       {!isLoading && !config && (
         <>
-          <Text style={styles.hint}>Connect your device to the tenant VPN.</Text>
-          {error && <Text style={styles.error}>{(error as any)?.response?.data?.error || 'No VPN config found'}</Text>}
-          <Button title="Enable VPN" onPress={handleCreate} disabled={create.isPending} />
+          <Text style={styles.hint}>{t('vpnHint')}</Text>
+          {error && <Text style={styles.error}>{(error as any)?.response?.data?.error || t('noVpnConfig', 'No VPN config found')}</Text>}
+          <Button title={t('enableVpn')} onPress={handleCreate} disabled={create.isPending} />
         </>
       )}
       {config && (
         <>
-          <Text style={styles.row}>Address: {config.address}</Text>
-          <Text style={styles.row}>Endpoint: {config.endpoint}</Text>
+          <Text style={styles.row}>{t('address', 'Address')}: {config.address}</Text>
+          <Text style={styles.row}>{t('endpoint', 'Endpoint')}: {config.endpoint}</Text>
           <Button
-            title={connected ? 'Disconnect VPN' : 'Connect VPN'}
+            title={connected ? t('disconnectVpn') : t('connectVpn')}
             onPress={async () => {
               try {
                 if (connected) {
@@ -60,11 +65,11 @@ export function VpnCard() {
                   setConnected(true);
                 }
               } catch (err: any) {
-                Alert.alert('VPN error', err.message);
+                Alert.alert(t('vpnError'), err.message);
               }
             }}
           />
-          <Button title="Delete VPN config" onPress={handleDelete} disabled={remove.isPending} />
+          <Button title={t('deleteVpn')} onPress={handleDelete} disabled={remove.isPending} />
         </>
       )}
     </View>
@@ -73,17 +78,14 @@ export function VpnCard() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    margin: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    margin: spacing.lg,
+    ...shadows.md,
   },
-  title: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  hint: { color: '#666', marginBottom: 12 },
-  row: { marginBottom: 4 },
-  error: { color: '#d32f2f', marginBottom: 12 },
+  title: { ...typography.h3, marginBottom: spacing.sm },
+  hint: { ...typography.bodySmall, color: colors.textSecondary, marginBottom: spacing.md },
+  row: { ...typography.bodySmall, marginBottom: spacing.xs },
+  error: { color: colors.error, marginBottom: spacing.md },
 });

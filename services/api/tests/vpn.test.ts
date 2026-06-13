@@ -4,6 +4,7 @@ import os from 'node:os';
 import request from 'supertest';
 import { createApp } from '../src/server';
 import { prisma } from '../src/lib/prisma';
+import { generateKeyPair } from '../src/lib/wireguard';
 
 const app = createApp();
 
@@ -44,51 +45,63 @@ describe('VPN', () => {
 
   it('creates a peer config', async () => {
     const alice = await createUser('alice@example.com', 'secret123', 'Alice');
+    const keys = generateKeyPair();
     const res = await request(app)
       .post('/api/vpn/config')
       .set('Authorization', `Bearer ${alice.token}`)
-      .set('X-Tenant-Id', alice.tenantId);
+      .set('X-Tenant-Id', alice.tenantId)
+      .send({ publicKey: keys.publicKey });
     expect(res.status).toBe(201);
     expect(res.body.config).toContain('[Interface]');
     expect(res.body.config).toContain('[Peer]');
-    expect(res.body.publicKey).toBeDefined();
+    expect(res.body.config).not.toContain('PrivateKey =');
+    expect(res.body.publicKey).toBe(keys.publicKey);
     expect(res.body.address).toMatch(/^10\.200\.0\.\d+\/32$/);
   });
 
   it('returns existing peer config on second call', async () => {
     const alice = await createUser('alice@example.com', 'secret123', 'Alice');
+    const keys = generateKeyPair();
     const first = await request(app)
       .post('/api/vpn/config')
       .set('Authorization', `Bearer ${alice.token}`)
-      .set('X-Tenant-Id', alice.tenantId);
+      .set('X-Tenant-Id', alice.tenantId)
+      .send({ publicKey: keys.publicKey });
     const second = await request(app)
       .post('/api/vpn/config')
       .set('Authorization', `Bearer ${alice.token}`)
-      .set('X-Tenant-Id', alice.tenantId);
+      .set('X-Tenant-Id', alice.tenantId)
+      .send({ publicKey: keys.publicKey });
     expect(second.status).toBe(200);
     expect(second.body.id).toBe(first.body.id);
+    expect(second.body.config).not.toContain('PrivateKey =');
   });
 
   it('gets peer config', async () => {
     const alice = await createUser('alice@example.com', 'secret123', 'Alice');
+    const keys = generateKeyPair();
     await request(app)
       .post('/api/vpn/config')
       .set('Authorization', `Bearer ${alice.token}`)
-      .set('X-Tenant-Id', alice.tenantId);
+      .set('X-Tenant-Id', alice.tenantId)
+      .send({ publicKey: keys.publicKey });
     const res = await request(app)
       .get('/api/vpn/config')
       .set('Authorization', `Bearer ${alice.token}`)
       .set('X-Tenant-Id', alice.tenantId);
     expect(res.status).toBe(200);
     expect(res.body.config).toContain('[Interface]');
+    expect(res.body.config).not.toContain('PrivateKey =');
   });
 
   it('deletes peer config', async () => {
     const alice = await createUser('alice@example.com', 'secret123', 'Alice');
+    const keys = generateKeyPair();
     await request(app)
       .post('/api/vpn/config')
       .set('Authorization', `Bearer ${alice.token}`)
-      .set('X-Tenant-Id', alice.tenantId);
+      .set('X-Tenant-Id', alice.tenantId)
+      .send({ publicKey: keys.publicKey });
     const del = await request(app)
       .delete('/api/vpn/config')
       .set('Authorization', `Bearer ${alice.token}`)

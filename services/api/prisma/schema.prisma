@@ -180,7 +180,6 @@ model VpnPeer {
   id         String   @id @default(uuid())
   userId     String   @unique
   tenantId   String
-  privateKey String
   publicKey  String   @unique
   address    String
   allowedIps String   @default("0.0.0.0/0, ::/0")

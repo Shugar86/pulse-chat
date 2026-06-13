@@ -22,7 +22,7 @@ export async function allocateAddress(tenantId: string, network: string): Promis
 }
 
 export interface VpnConfigInput {
-  privateKey: string;
+  privateKey?: string;
   address: string;
   dns: string;
   serverPublicKey: string;
@@ -31,15 +31,18 @@ export interface VpnConfigInput {
 }
 
 export function generateClientConfig(input: VpnConfigInput): string {
-  return `[Interface]
-PrivateKey = ${input.privateKey}
-Address = ${input.address}
-DNS = ${input.dns}
+  const interfaceLines: string[] = ['[Interface]'];
+  if (input.privateKey) {
+    interfaceLines.push(`PrivateKey = ${input.privateKey}`);
+  }
+  interfaceLines.push(`Address = ${input.address}`, `DNS = ${input.dns}`, '');
 
-[Peer]
-PublicKey = ${input.serverPublicKey}
-AllowedIPs = ${input.allowedIps}
-Endpoint = ${input.endpoint}
-PersistentKeepalive = 25
-`;
+  return interfaceLines.concat([
+    '[Peer]',
+    `PublicKey = ${input.serverPublicKey}`,
+    `AllowedIPs = ${input.allowedIps}`,
+    `Endpoint = ${input.endpoint}`,
+    'PersistentKeepalive = 25',
+    '',
+  ]).join('\n');
 }
