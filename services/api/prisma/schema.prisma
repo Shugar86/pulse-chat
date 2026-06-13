@@ -23,6 +23,7 @@ model User {
   chatMembers      ChatMember[]
   messages         Message[]
   readReceipts     ReadReceipt[]
+  vpnPeer          VpnPeer?
 }
 
 model Tenant {
@@ -34,6 +35,7 @@ model Tenant {
   contacts  Contact[]
   chats     Chat[]
   invites   TenantInvite[]
+  vpnPeers  VpnPeer[]
 }
 
 model TenantMembership {
@@ -172,4 +174,22 @@ model ReadReceipt {
   @@unique([messageId, userId])
   @@index([messageId])
   @@index([userId])
+}
+
+model VpnPeer {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  tenantId   String
+  privateKey String
+  publicKey  String   @unique
+  address    String
+  allowedIps String   @default("0.0.0.0/0, ::/0")
+  dns        String   @default("1.1.1.1")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
