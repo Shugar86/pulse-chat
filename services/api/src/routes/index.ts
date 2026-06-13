@@ -7,6 +7,7 @@ import { chatsRouter } from './chats.js';
 import { vpnRouter } from './vpn.js';
 import { healthRouter } from './health.js';
 import { turnRouter } from './turn.js';
+import { pushRouter } from './push.js';
 
 export const routes: Router = Router();
 
@@ -18,3 +19,4 @@ routes.use('/contacts', contactsRouter);
 routes.use('/chats', chatsRouter);
 routes.use('/vpn', vpnRouter);
 routes.use('/turn', turnRouter);
+routes.use('/push', pushRouter);

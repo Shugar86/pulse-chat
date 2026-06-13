@@ -16,6 +16,7 @@ const envSchema = z.object({
   TURN_SECRET: z.string().min(1).default('change-me-turn-secret'),
   TURN_HOST: z.string().min(1).default('turn.localhost'),
   TURN_PORT: z.coerce.number().int().min(1).default(3478),
+  FIREBASE_SERVICE_ACCOUNT: z.string().default(''),
 });
 
 const env = envSchema.parse(process.env);
@@ -41,4 +42,5 @@ export const config = {
     host: env.TURN_HOST,
     port: env.TURN_PORT,
   },
+  firebaseServiceAccount: env.FIREBASE_SERVICE_ACCOUNT,
 } as const;
