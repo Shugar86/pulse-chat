@@ -9,6 +9,7 @@ import { setLanguage } from '../i18n';
 import { Card } from '../components/Card';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
+import { VpnCard } from '../components/VpnCard';
 import { colors, spacing, typography } from '../theme';
 
 export function ProfileScreen() {
@@ -49,6 +50,7 @@ export function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+      <VpnCard />
       <Card style={styles.card}>
         <Avatar uri={user?.avatarUrl} name={user?.displayName || '?'} size="lg" />
         <Text style={styles.name}>{user?.displayName}</Text>
