@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button } from '../components/Button';
@@ -10,8 +10,14 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'>;
 
 export function WelcomeScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const fade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fade, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+  }, [fade]);
+
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, { opacity: fade }]}>
       <View style={styles.logo} />
       <Text style={styles.title} accessibilityRole="header">{t('welcome')}</Text>
       <Text style={styles.subtitle}>{t('welcomeSubtitle')}</Text>
@@ -20,7 +26,7 @@ export function WelcomeScreen({ navigation }: Props) {
         <View style={styles.gap} />
         <Button title={t('register')} onPress={() => navigation.navigate('Register')} variant="secondary" />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

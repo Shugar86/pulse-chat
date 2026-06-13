@@ -70,5 +70,14 @@
   "required": "This field is required",
   "invalidEmail": "Enter a valid email",
   "minLength": "Must be at least {{min}} characters",
-  "offline": "No internet connection"
+  "offline": "No internet connection",
+  "vpn": "Corporate VPN",
+  "vpnHint": "Connect your device to the tenant VPN.",
+  "enableVpn": "Enable VPN",
+  "deleteVpn": "Delete VPN config",
+  "connectVpn": "Connect VPN",
+  "disconnectVpn": "Disconnect VPN",
+  "vpnError": "VPN error",
+  "deleteVpnConfirm": "Delete VPN config?",
+  "deleteVpnSubtitle": "You will need to reconnect afterwards."
 }

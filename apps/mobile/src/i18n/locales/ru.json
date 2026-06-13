@@ -70,5 +70,14 @@
   "required": "Это поле обязательно",
   "invalidEmail": "Введите корректный email",
   "minLength": "Минимум {{min}} символов",
-  "offline": "Нет подключения к интернету"
+  "offline": "Нет подключения к интернету",
+  "vpn": "Корпоративный VPN",
+  "vpnHint": "Подключите устройство к VPN компании.",
+  "enableVpn": "Включить VPN",
+  "deleteVpn": "Удалить конфиг VPN",
+  "connectVpn": "Подключить VPN",
+  "disconnectVpn": "Отключить VPN",
+  "vpnError": "Ошибка VPN",
+  "deleteVpnConfirm": "Удалить конфиг VPN?",
+  "deleteVpnSubtitle": "После удаления потребуется повторное подключение."
 }
