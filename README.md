@@ -82,6 +82,10 @@ Pulse Chat can provision a per-user, per-tenant WireGuard VPN. The server genera
 
 Private keys are currently stored in the database. Do not use this for production secrets; migrate to client-side key generation before a real rollout.
 
+### Security improvements
+
+Starting with this polish round, VPN private keys are generated on the mobile device. The server stores only the client's public key and the server-side public key. Private keys never leave the device.
+
 ## Правила для агентов
 
 См. [`AGENTS.md`](./AGENTS.md) и глобальный канон `~/dev/agent-os/AGENTS.md`.
