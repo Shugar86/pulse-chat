@@ -15,30 +15,33 @@ import {
 
 export type CallState = 'idle' | 'dialing' | 'incoming' | 'connected' | 'ended' | 'busy' | 'rejected' | 'timeout';
 
+export interface Call {
+  callId: string;
+  remoteUserId: string;
+  state: CallState;
+}
+
 export function useCall() {
   const socket = useSocket();
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
-  const [callState, setCallState] = useState<CallState>('idle');
-  const [callId, setCallId] = useState<string | null>(null);
-  const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
+  const [activeCall, setActiveCall] = useState<Call | null>(null);
 
-  const closeCall = useCallback(() => {
+  const closeCall = useCallback((callId: string) => {
+    if (activeCall?.callId !== callId) return;
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     pcRef.current?.close();
     pcRef.current = null;
     localStreamRef.current = null;
     remoteStreamRef.current = null;
-    setCallState('ended');
-  }, []);
+    setActiveCall((prev) => (prev?.callId === callId ? null : prev));
+  }, [activeCall]);
 
-  const startCall = useCallback(async (toUserId: string) => {
+  const startCall = useCallback(async (toUserId: string): Promise<Call> => {
     if (!socket) throw new Error('Socket not connected');
     const id = crypto.randomUUID();
-    setCallId(id);
-    setRemoteUserId(toUserId);
-    setCallState('dialing');
+    setActiveCall({ callId: id, remoteUserId: toUserId, state: 'dialing' });
 
     const { data } = await api.get<IceServersResponse>('/turn/credentials');
     const pc = createPeerConnection(data.iceServers);
@@ -61,13 +64,13 @@ export function useCall() {
     const offer = await createOffer(pc);
     await setLocalDescription(pc, offer);
     socket.emit('call:offer', { callId: id, toUserId, sdp: offer.sdp });
+
+    return { callId: id, remoteUserId: toUserId, state: 'dialing' };
   }, [socket]);
 
-  const acceptCall = useCallback(async (incomingCallId: string, fromUserId: string, offerSdp: string) => {
+  const acceptCall = useCallback(async (incomingCallId: string, fromUserId: string, offerSdp: string): Promise<Call> => {
     if (!socket) throw new Error('Socket not connected');
-    setCallId(incomingCallId);
-    setRemoteUserId(fromUserId);
-    setCallState('incoming');
+    setActiveCall({ callId: incomingCallId, remoteUserId: fromUserId, state: 'incoming' });
 
     const { data } = await api.get<IceServersResponse>('/turn/credentials');
     const pc = createPeerConnection(data.iceServers);
@@ -91,30 +94,31 @@ export function useCall() {
     const answer = await createAnswer(pc);
     await setLocalDescription(pc, answer);
     socket.emit('call:answer', { callId: incomingCallId, sdp: answer.sdp });
-    setCallState('connected');
+    setActiveCall({ callId: incomingCallId, remoteUserId: fromUserId, state: 'connected' });
+
+    return { callId: incomingCallId, remoteUserId: fromUserId, state: 'connected' };
   }, [socket]);
 
-  const hangUp = useCallback(() => {
-    if (callId && socket) {
-      socket.emit('call:hangup', { callId });
-    }
-    closeCall();
-  }, [callId, socket, closeCall]);
+  const rejectCall = useCallback((callId: string) => {
+    if (!socket) return;
+    socket.emit('call:reject', { callId });
+    closeCall(callId);
+  }, [socket, closeCall]);
 
-  const rejectCall = useCallback(() => {
-    if (callId && socket) {
-      socket.emit('call:reject', { callId });
-    }
-    closeCall();
-  }, [callId, socket, closeCall]);
+  const hangUp = useCallback((callId: string) => {
+    if (!socket) return;
+    socket.emit('call:hangup', { callId });
+    closeCall(callId);
+  }, [socket, closeCall]);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !activeCall) return;
+    const callId = activeCall.callId;
 
     const onAnswer = async ({ callId: id, sdp }: { callId: string; sdp: string }) => {
       if (id !== callId || !pcRef.current) return;
       await setRemoteDescription(pcRef.current, new RTCSessionDescription({ type: 'answer', sdp }));
-      setCallState('connected');
+      setActiveCall((prev) => (prev?.callId === callId ? { ...prev, state: 'connected' } : prev));
     };
 
     const onIceCandidate = async ({ callId: id, candidate }: { callId: string; candidate: any }) => {
@@ -124,19 +128,19 @@ export function useCall() {
 
     const onHangUp = ({ callId: id }: { callId: string }) => {
       if (id !== callId) return;
-      closeCall();
+      closeCall(callId);
     };
 
     const onReject = ({ callId: id }: { callId: string }) => {
       if (id !== callId) return;
-      setCallState('rejected');
-      closeCall();
+      setActiveCall((prev) => (prev?.callId === callId ? { ...prev, state: 'rejected' } : prev));
+      closeCall(callId);
     };
 
     const onTimeout = ({ callId: id }: { callId: string }) => {
       if (id !== callId) return;
-      setCallState('timeout');
-      closeCall();
+      setActiveCall((prev) => (prev?.callId === callId ? { ...prev, state: 'timeout' } : prev));
+      closeCall(callId);
     };
 
     socket.on('call:answer', onAnswer);
@@ -152,16 +156,14 @@ export function useCall() {
       socket.off('call:reject', onReject);
       socket.off('call:timeout', onTimeout);
     };
-  }, [socket, callId, closeCall]);
+  }, [socket, activeCall, closeCall]);
 
   return {
-    callState,
-    callId,
-    remoteUserId,
+    activeCall,
     startCall,
     acceptCall,
-    hangUp,
     rejectCall,
+    hangUp,
     localStream: localStreamRef.current,
     remoteStream: remoteStreamRef.current,
   };

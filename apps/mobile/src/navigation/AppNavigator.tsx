@@ -18,24 +18,24 @@ const Stack = createNativeStackNavigator<MainStackParamList>();
 
 function CallScreenRoute({ route, navigation }: any) {
   const { displayName, userId } = route.params;
-  const { startCall, hangUp, callState } = useCallContext();
+  const { activeCall, startCall, hangUp } = useCallContext();
 
   useEffect(() => {
-    if (callState === 'idle') {
+    if (!activeCall) {
       startCall(userId);
     }
-  }, [callState, startCall, userId]);
+  }, [activeCall, startCall, userId]);
 
   const subtitle =
-    callState === 'dialing' ? 'Calling...' :
-    callState === 'connected' ? 'Call in progress' :
+    activeCall?.state === 'dialing' ? 'Calling...' :
+    activeCall?.state === 'connected' ? 'Call in progress' :
     'Call ended';
 
   return (
     <CallScreen
       title={displayName}
       subtitle={subtitle}
-      onHangUp={() => { hangUp(); navigation.goBack(); }}
+      onHangUp={() => { hangUp(activeCall?.callId || ''); navigation.goBack(); }}
     />
   );
 }

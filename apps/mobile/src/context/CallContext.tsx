@@ -26,6 +26,10 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!socket) return;
     const onIncoming = ({ callId, fromUserId, sdp }: any) => {
+      if (call.activeCall) {
+        socket.emit('call:busy', { callId, toUserId: fromUserId });
+        return;
+      }
       const contactName = user?.tenants
         .flatMap((m) => (m.tenant as any).members || [])
         .find((u: any) => u.id === fromUserId)?.displayName || fromUserId;
@@ -33,7 +37,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
     };
     socket.on('call:incoming', onIncoming);
     return () => { socket.off('call:incoming', onIncoming); };
-  }, [socket, user]);
+  }, [socket, user, call.activeCall]);
 
   const handleAccept = useCallback(async () => {
     if (!incoming) return;
@@ -44,7 +48,7 @@ export function CallProvider({ children }: { children: React.ReactNode }) {
 
   const handleDecline = useCallback(() => {
     if (!incoming) return;
-    call.rejectCall();
+    call.rejectCall(incoming.callId);
     setIncoming(null);
   }, [incoming, call]);
 
