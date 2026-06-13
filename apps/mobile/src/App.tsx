@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './i18n';
 import { AppNavigator } from './navigation/AppNavigator';
 import { SocketProvider } from './context/SocketContext';
+import { CallProvider } from './context/CallContext';
 import { OfflineBanner } from './components/OfflineBanner';
 import { queryClient } from './lib/queryClient';
 
@@ -15,7 +16,9 @@ export default function App() {
         <NavigationContainer>
           <OfflineBanner />
           <SocketProvider>
-            <AppNavigator />
+            <CallProvider>
+              <AppNavigator />
+            </CallProvider>
           </SocketProvider>
         </NavigationContainer>
       </QueryClientProvider>

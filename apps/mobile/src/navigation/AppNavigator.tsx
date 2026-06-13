@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { createNativeStackNavigator, type NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/authStore';
+import { useCallContext } from '../context/CallContext';
 import { useTenantStore } from '../stores/tenantStore';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
@@ -16,13 +16,26 @@ import type { MainStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
-function CallScreenRoute({ route, navigation }: NativeStackScreenProps<MainStackParamList, 'Call'>) {
-  const { t } = useTranslation();
+function CallScreenRoute({ route, navigation }: any) {
+  const { displayName, userId } = route.params;
+  const { startCall, hangUp, callState } = useCallContext();
+
+  useEffect(() => {
+    if (callState === 'idle') {
+      startCall(userId);
+    }
+  }, [callState, startCall, userId]);
+
+  const subtitle =
+    callState === 'dialing' ? 'Calling...' :
+    callState === 'connected' ? 'Call in progress' :
+    'Call ended';
+
   return (
     <CallScreen
-      title={route.params.displayName}
-      subtitle={t('calling')}
-      onHangUp={() => navigation.goBack()}
+      title={displayName}
+      subtitle={subtitle}
+      onHangUp={() => { hangUp(); navigation.goBack(); }}
     />
   );
 }
