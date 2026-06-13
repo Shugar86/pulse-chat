@@ -67,6 +67,21 @@ pnpm start
 > Phase 1 UI polish applied — warm slate theme, consistent components, empty states, micro-animations.
 > Multitenancy MVP applied — users/companies isolated via `Tenant`/`TenantMembership`, active tenant selected on mobile and sent as `X-Tenant-Id` header / socket auth.
 
+## VPN (MVP)
+
+Pulse Chat can provision a per-user, per-tenant WireGuard VPN. The server generates client keys for the MVP; future releases will move key generation to the device.
+
+### Local setup
+
+1. Copy `.env.example` to `.env` and fill `WG_SERVER_PUBLIC_KEY` after starting WireGuard once.
+2. Start the stack: `docker compose up -d`
+3. Create the API peer config via mobile or curl: `POST /api/vpn/config`.
+4. Import the returned `config` string into your WireGuard client.
+
+### Security note
+
+Private keys are currently stored in the database. Do not use this for production secrets; migrate to client-side key generation before a real rollout.
+
 ## Правила для агентов
 
 См. [`AGENTS.md`](./AGENTS.md) и глобальный канон `~/dev/agent-os/AGENTS.md`.
