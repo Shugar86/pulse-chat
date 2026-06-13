@@ -85,6 +85,7 @@
   "cancel": "Cancel",
   "delete": "Delete",
   "noVpnConfig": "No VPN config found",
+  "noPrivateKey": "Private key not found. Delete and recreate config.",
   "calling": "Calling...",
   "incomingCall": "Incoming call",
   "callInProgress": "Call in progress",

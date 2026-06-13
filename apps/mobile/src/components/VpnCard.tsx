@@ -5,6 +5,7 @@ import { Button } from './Button';
 import { useVpn } from '../hooks/useVpn';
 import { connectVpn, disconnectVpn, getVpnStatus } from '../lib/nativeVpn';
 import { generateKeyPair } from '../lib/wireguard';
+import { saveVpnPrivateKey, deleteVpnPrivateKey, buildWireGuardConfig, getVpnPrivateKey } from '../lib/vpnConfig';
 import { colors, spacing, radius, shadows, typography } from '../theme';
 
 export function VpnCard() {
@@ -21,6 +22,9 @@ export function VpnCard() {
   const handleCreate = () => {
     const keys = generateKeyPair();
     create.mutate(keys.publicKey, {
+      onSuccess: async (config) => {
+        await saveVpnPrivateKey(config.id, keys.privateKey);
+      },
       onError: (err: any) => {
         Alert.alert(t('vpnError'), err?.response?.data?.error || err.message);
       },
@@ -33,7 +37,12 @@ export function VpnCard() {
       {
         text: t('delete', 'Delete'),
         style: 'destructive',
-        onPress: () => remove.mutate(),
+        onPress: async () => {
+          if (config) {
+            await deleteVpnPrivateKey(config.id);
+          }
+          remove.mutate();
+        },
       },
     ]);
   };
@@ -61,7 +70,13 @@ export function VpnCard() {
                   await disconnectVpn();
                   setConnected(false);
                 } else if (config) {
-                  await connectVpn(config.config, 'Pulse VPN');
+                  const privateKey = await getVpnPrivateKey(config.id);
+                  if (!privateKey) {
+                    Alert.alert(t('vpnError'), t('noPrivateKey', 'Private key not found. Delete and recreate config.'));
+                    return;
+                  }
+                  const fullConfig = buildWireGuardConfig(config, privateKey);
+                  await connectVpn(fullConfig, 'Pulse VPN');
                   setConnected(true);
                 }
               } catch (err: any) {
