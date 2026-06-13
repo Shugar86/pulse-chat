@@ -2,6 +2,13 @@ import { Server, Socket } from 'socket.io';
 import { z } from 'zod';
 import { verifyAccessToken } from './jwt.js';
 import { prisma } from './prisma.js';
+import {
+  createCallSession,
+  getCallSession,
+  connectCallSession,
+  endCallSession,
+  getActiveCallId,
+} from './calls.js';
 
 const chatIdEventSchema = z.object({ chatId: z.string().uuid() });
 const sendMessageEventSchema = z.object({
@@ -9,6 +16,13 @@ const sendMessageEventSchema = z.object({
   content: z.string().min(1).max(4000),
 });
 const readMessageEventSchema = z.object({ messageId: z.string().uuid() });
+
+const offerSchema = z.object({ callId: z.string().uuid(), toUserId: z.string().uuid(), sdp: z.string().min(1) });
+const answerSchema = z.object({ callId: z.string().uuid(), sdp: z.string().min(1) });
+const iceCandidateSchema = z.object({ callId: z.string().uuid(), candidate: z.record(z.any()) });
+const callIdSchema = z.object({ callId: z.string().uuid() });
+
+const CALL_TIMEOUT_MS = 30000;
 
 const userSelect = { id: true, email: true, displayName: true, avatarUrl: true };
 
@@ -25,6 +39,94 @@ function formatMessage(message: {
 }) {
   const { readReceipts, ...rest } = message;
   return { ...rest, readBy: readReceipts.map((r) => ({ userId: r.userId, readAt: r.readAt.toISOString() })) };
+}
+
+function setupCallHandlers(io: Server, socket: Socket, userId: string) {
+  socket.on('call:offer', async (data) => {
+    try {
+      const { callId, toUserId, sdp } = offerSchema.parse(data);
+      if (toUserId === userId) return socket.emit('error', { message: 'Cannot call yourself' });
+      const session = createCallSession(callId, userId, toUserId);
+      if (!session) return socket.emit('call:busy', { callId, toUserId });
+
+      io.to(`user:${toUserId}`).emit('call:incoming', { callId, fromUserId: userId, sdp });
+
+      setTimeout(() => {
+        const s = getCallSession(callId);
+        if (s && s.status === 'dialing') {
+          endCallSession(callId);
+          io.to(`user:${s.callerId}`).emit('call:timeout', { callId });
+          io.to(`user:${s.calleeId}`).emit('call:timeout', { callId });
+        }
+      }, CALL_TIMEOUT_MS);
+    } catch {
+      socket.emit('error', { message: 'Invalid call:offer payload' });
+    }
+  });
+
+  socket.on('call:answer', (data) => {
+    try {
+      const { callId, sdp } = answerSchema.parse(data);
+      const session = getCallSession(callId);
+      if (!session || session.calleeId !== userId) return socket.emit('error', { message: 'Call not found' });
+      if (!connectCallSession(callId)) return socket.emit('error', { message: 'Call not in dialing state' });
+      io.to(`user:${session.callerId}`).emit('call:answer', { callId, sdp });
+    } catch {
+      socket.emit('error', { message: 'Invalid call:answer payload' });
+    }
+  });
+
+  socket.on('call:ice-candidate', (data) => {
+    try {
+      const { callId, candidate } = iceCandidateSchema.parse(data);
+      const session = getCallSession(callId);
+      if (!session || (session.callerId !== userId && session.calleeId !== userId)) {
+        return socket.emit('error', { message: 'Call not found' });
+      }
+      const toUserId = session.callerId === userId ? session.calleeId : session.callerId;
+      io.to(`user:${toUserId}`).emit('call:ice-candidate', { callId, candidate });
+    } catch {
+      socket.emit('error', { message: 'Invalid call:ice-candidate payload' });
+    }
+  });
+
+  socket.on('call:hangup', (data) => {
+    try {
+      const { callId } = callIdSchema.parse(data);
+      const session = getCallSession(callId);
+      if (!session || (session.callerId !== userId && session.calleeId !== userId)) {
+        return socket.emit('error', { message: 'Call not found' });
+      }
+      endCallSession(callId);
+      const otherUserId = session.callerId === userId ? session.calleeId : session.callerId;
+      io.to(`user:${otherUserId}`).emit('call:hangup', { callId });
+    } catch {
+      socket.emit('error', { message: 'Invalid call:hangup payload' });
+    }
+  });
+
+  socket.on('call:reject', (data) => {
+    try {
+      const { callId } = callIdSchema.parse(data);
+      const session = getCallSession(callId);
+      if (!session || session.calleeId !== userId) return socket.emit('error', { message: 'Call not found' });
+      endCallSession(callId);
+      io.to(`user:${session.callerId}`).emit('call:reject', { callId });
+    } catch {
+      socket.emit('error', { message: 'Invalid call:reject payload' });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    const callId = getActiveCallId(userId);
+    if (callId) {
+      const session = endCallSession(callId);
+      if (session) {
+        const otherUserId = session.callerId === userId ? session.calleeId : session.callerId;
+        io.to(`user:${otherUserId}`).emit('call:hangup', { callId });
+      }
+    }
+  });
 }
 
 export function setupSocketHandlers(io: Server) {
@@ -161,6 +263,8 @@ export function setupSocketHandlers(io: Server) {
         }
       }
     });
+
+    setupCallHandlers(io, socket, userId);
 
     if (!wasOnline) {
       try {
