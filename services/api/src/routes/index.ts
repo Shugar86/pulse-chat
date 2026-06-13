@@ -5,10 +5,11 @@ import { tenantsRouter } from './tenants.js';
 import { contactsRouter } from './contacts.js';
 import { chatsRouter } from './chats.js';
 import { vpnRouter } from './vpn.js';
+import { healthRouter } from './health.js';
 
 export const routes: Router = Router();
 
-routes.get('/health', (_req, res) => res.json({ ok: true }));
+routes.use('/health', healthRouter);
 routes.use('/auth', authRouter);
 routes.use('/users', usersRouter);
 routes.use('/tenants', tenantsRouter);
