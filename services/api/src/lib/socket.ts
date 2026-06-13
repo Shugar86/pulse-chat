@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { z } from 'zod';
 import { verifyAccessToken } from './jwt.js';
 import { prisma } from './prisma.js';
+import { sendIncomingCallPush } from './push.js';
 import {
   createCallSession,
   getCallSession,
@@ -50,6 +51,11 @@ function setupCallHandlers(io: Server, socket: Socket, userId: string) {
       if (!session) return socket.emit('call:busy', { callId, toUserId });
 
       io.to(`user:${toUserId}`).emit('call:incoming', { callId, fromUserId: userId, sdp });
+
+      const socketCount = io.sockets.adapter.rooms.get(`user:${toUserId}`)?.size || 0;
+      if (socketCount === 0) {
+        sendIncomingCallPush(toUserId, 'Incoming call').catch(() => {});
+      }
 
       setTimeout(() => {
         const s = getCallSession(callId);
