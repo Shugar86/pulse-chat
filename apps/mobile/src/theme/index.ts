@@ -62,3 +62,14 @@ export const typography = {
   bodySmall: { fontSize: 14, fontWeight: '400' as const, color: colors.text },
   caption: { fontSize: 12, fontWeight: '400' as const, color: colors.textSecondary },
 } as const;
+
+export const statusColors = {
+  online: '#4A7C59',
+  offline: '#A89E92',
+} as const;
+
+export const animation = {
+  pressScale: 0.97,
+  fadeDuration: 200,
+  spring: { friction: 5, useNativeDriver: true },
+} as const;

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Pressable, Animated, Text, View, StyleSheet, ViewStyle } from 'react-native';
-import { colors, spacing, typography } from '../theme';
+import { colors, spacing, typography, animation } from '../theme';
 import { Avatar } from './Avatar';
 
 interface ListItemProps {
@@ -16,6 +16,7 @@ interface ListItemProps {
 export function ListItem({ title, subtitle, avatarUri, avatarName, trailing, onPress, style }: ListItemProps) {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(8)).current;
+  const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const opacityAnim = Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true });
@@ -27,6 +28,20 @@ export function ListItem({ title, subtitle, avatarUri, avatarName, trailing, onP
       translateAnim.stop();
     };
   }, []);
+
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: animation.pressScale,
+      ...animation.spring,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      ...animation.spring,
+    }).start();
+  };
 
   const content = (
     <Animated.View style={[styles.row, { opacity, transform: [{ translateY }] }, style]}>
@@ -40,7 +55,13 @@ export function ListItem({ title, subtitle, avatarUri, avatarName, trailing, onP
   );
 
   if (onPress) {
-    return <Pressable onPress={onPress}>{content}</Pressable>;
+    return (
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+          {content}
+        </Pressable>
+      </Animated.View>
+    );
   }
   return content;
 }
