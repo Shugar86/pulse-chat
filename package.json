@@ -2,11 +2,42 @@
   "name": "pulse-chat",
   "private": true,
   "version": "0.1.0",
+  "description": "Корпоративный мобильный мессенджер со встроенным VPN: чаты, аудиозвонки и WireGuard.",
+  "keywords": [
+    "messenger",
+    "chat",
+    "webrtc",
+    "wireguard",
+    "vpn",
+    "react-native",
+    "expo",
+    "nodejs",
+    "typescript"
+  ],
+  "homepage": "https://github.com/Shugar86/pulse-chat#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shugar86/pulse-chat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Shugar86/pulse-chat/issues"
+  },
+  "license": "MIT",
+  "author": "Shugar <shugar@dev.local>",
   "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "pnpm -r --if-present dev",
     "test": "pnpm -r --if-present test",
-    "lint": "pnpm -r --if-present lint"
+    "lint": "pnpm -r --if-present lint",
+    "lint:fix": "pnpm -r --if-present lint:fix",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "db:generate": "pnpm -C services/api exec prisma generate",
+    "db:push": "pnpm -C services/api exec prisma db push",
+    "db:migrate": "pnpm -C services/api exec prisma migrate dev"
   },
   "devDependencies": {
     "typescript": "^5.7.2"
