@@ -13,6 +13,9 @@ const envSchema = z.object({
   WG_DNS: z.string().min(1).default('1.1.1.1'),
   WG_ALLOWED_IPS: z.string().min(1).default('0.0.0.0/0, ::/0'),
   WG_NETWORK: z.string().min(1).default('10.200.0.0/24'),
+  TURN_SECRET: z.string().min(1).default('change-me-turn-secret'),
+  TURN_HOST: z.string().min(1).default('turn.localhost'),
+  TURN_PORT: z.coerce.number().int().min(1).default(3478),
 });
 
 const env = envSchema.parse(process.env);
@@ -32,5 +35,10 @@ export const config = {
     dns: env.WG_DNS,
     allowedIps: env.WG_ALLOWED_IPS,
     network: env.WG_NETWORK,
+  },
+  turn: {
+    secret: env.TURN_SECRET,
+    host: env.TURN_HOST,
+    port: env.TURN_PORT,
   },
 } as const;
