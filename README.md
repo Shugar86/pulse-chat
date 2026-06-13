@@ -89,3 +89,11 @@ Starting with this polish round, VPN private keys are generated on the mobile de
 ## Правила для агентов
 
 См. [`AGENTS.md`](./AGENTS.md) и глобальный канон `~/dev/agent-os/AGENTS.md`.
+
+## Production deployment
+
+1. Point domains `api.pulse.chat`, `vpn.pulse.chat`, `turn.pulse.chat` to your VDS.
+2. Copy `.env.example` to `.env` and fill all secrets.
+3. Run `bash deploy/nginx/init-ssl.sh` to obtain certificates.
+4. Start services: `docker compose -f docker-compose.prod.yml up -d`.
+5. Build mobile app with `EXPO_PUBLIC_API_URL=https://api.pulse.chat`.

@@ -1,0 +1,111 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      TURN_SECRET: ${TURN_SECRET}
+      TURN_HOST: ${TURN_HOST}
+      WG_SERVER_PUBLIC_KEY: ${WG_SERVER_PUBLIC_KEY}
+      WG_ENDPOINT: ${WG_ENDPOINT}
+      WG_NETWORK: ${WG_NETWORK}
+      WG_SYNC_DIR: /sync
+    volumes:
+      - ${WG_SYNC_DIR}:/sync
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  coturn:
+    image: coturn/coturn
+    environment:
+      TURN_SECRET: ${TURN_SECRET}
+    command: >
+      turnserver
+      --realm=${TURN_HOST}
+      --fingerprint
+      --listening-port=3478
+      --min-port=10000
+      --max-port=20000
+      --verbose
+      --static-auth-secret=${TURN_SECRET}
+      --userdb=/var/lib/coturn/turndb
+    ports:
+      - '3478:3478/tcp'
+      - '3478:3478/udp'
+      - '10000-20000:10000-20000/udp'
+    restart: unless-stopped
+
+  wireguard:
+    image: ghcr.io/wg-easy/wg-easy
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.ip_forward=1
+    environment:
+      WG_HOST: ${WG_HOST}
+      PASSWORD: ${WG_PASSWORD}
+      WG_PORT: ${WG_PORT}
+      WG_DEFAULT_DNS: ${WG_DNS}
+      WG_ALLOWED_IPS: ${WG_ALLOWED_IPS}
+      WG_PERSISTENT_KEEPALIVE: 25
+    ports:
+      - '${WG_PORT}:${WG_PORT}/udp'
+      - '51821:51821/tcp'
+    volumes:
+      - wireguard_data:/etc/wireguard
+      - ${WG_SYNC_DIR}:/sync:ro
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+      - ./deploy/certbot/www:/var/www/certbot:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  wireguard_data:
