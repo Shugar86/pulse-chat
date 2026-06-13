@@ -1,16 +1,22 @@
-// This module is a placeholder until react-native-wireguard-vpn is installed
-// and linked via an Expo dev build / EAS Build.
+import { NativeModules } from 'react-native';
 
-export interface NativeVpnModule {
-  connect(config: string, name: string): Promise<void>;
-  disconnect(): Promise<void>;
-  getStatus(): Promise<{ connected: boolean }>;
-}
+const WireguardVpn = NativeModules.WireguardVpn;
 
-export async function connectVpn(_config: string, _name: string): Promise<void> {
-  throw new Error('Native VPN module is not available in Expo Go. Build a dev client.');
+export async function connectVpn(config: string, name: string): Promise<void> {
+  if (!WireguardVpn) {
+    throw new Error('Native VPN module is not available in Expo Go. Build a dev client.');
+  }
+  return WireguardVpn.connect(config, name);
 }
 
 export async function disconnectVpn(): Promise<void> {
-  throw new Error('Native VPN module is not available in Expo Go. Build a dev client.');
+  if (!WireguardVpn) {
+    throw new Error('Native VPN module is not available in Expo Go. Build a dev client.');
+  }
+  return WireguardVpn.disconnect();
+}
+
+export async function getVpnStatus(): Promise<{ connected: boolean }> {
+  if (!WireguardVpn) return { connected: false };
+  return WireguardVpn.getStatus();
 }

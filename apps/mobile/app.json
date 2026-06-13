@@ -15,6 +15,9 @@
       "package": "chat.pulse.mobile",
       "adaptiveIcon": { "backgroundColor": "#1a2230" }
     },
-    "plugins": ["expo-secure-store"]
+    "plugins": [
+      "expo-secure-store",
+      ["react-native-wireguard-vpn", {}]
+    ]
   }
 }
