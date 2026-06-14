@@ -175,9 +175,9 @@ cp .env.example apps/mobile/.env
 # 4. Поднять инфраструктуру
 docker compose up -d
 
-# 5. Сгенерировать Prisma-клиент и применить схему
+# 5. Сгенерировать Prisma-клиент и применить миграции
 pnpm db:generate
-pnpm db:push
+pnpm db:migrate
 
 # 6. Запустить бэкенд
 pnpm -C services/api dev
@@ -216,6 +216,9 @@ pnpm -C apps/mobile start
    ```bash
    docker compose -f docker-compose.prod.yml up -d
    ```
+
+   Миграции БД применяются автоматически при старте контейнера `api`
+   (`prisma migrate deploy` в `docker-entrypoint.sh`).
 
 5. Получите `WG_SERVER_PUBLIC_KEY` из контейнера `wg-easy` и обновите `.env`.
 

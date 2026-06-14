@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/.expo
+**/coverage
+**/*.tsbuildinfo
+.git
+.github
+.claude
+.superpowers
+deploy/certbot
+docs
+*.log
+.env
+**/.env
