@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <b>Корпоративный мобильный мессенджер со встроенным VPN.</b><br/>
+  <b>Корпоративный мессенджер, который не торгует приватностью.</b><br/>
   Текстовые чаты · Аудиозвонки 1-to-1 · WireGuard VPN
 </p>
 
@@ -20,7 +20,19 @@
 
 ---
 
-## Что внутри
+## Что это
+
+**Pulse Chat** — мобильный мессенджер для команд и компаний, которым важно держать общение под контролем. Никаких сторонних мессенджеров, никаких утечек метаданных, никаких «мы никогда не читаем ваши сообщения» на словах.
+
+Здесь сообщения ходят через ваш сервер, звонки устанавливаются напрямую через WebRTC, а VPN-приватные ключи создаются прямо на устройстве и никогда его не покидают.
+
+Для кого:
+
+- Компании, которым нужен закрытый корпоративный чат.
+- Команды, работающие с чувствительными данными.
+- Разработчиков, которые хотят развернуть свой мессенджер на своей инфраструктуре.
+
+## Возможности
 
 | Возможность | Статус |
 |-------------|--------|
@@ -78,7 +90,7 @@
 
 ## Структура репозитория
 
-```
+```text
 pulse-chat/
 ├── apps/
 │   └── mobile/              # Expo + React Native приложение
@@ -173,24 +185,23 @@ pnpm test
 pnpm lint
 ```
 
-## Документация
-
-- [Дизайн Phase 1](./docs/superpowers/specs/2026-06-12-pulse-chat-design.md)
-- [Дизайн Phase 1 Polish](./docs/superpowers/specs/2026-06-12-pulse-chat-phase1-polish-design.md)
-- [VPN + Robustness Design](./docs/superpowers/specs/2026-06-13-vpn-and-robustness-design.md)
-- [Production MVP Design](./docs/superpowers/specs/2026-06-13-production-mvp-design.md)
-- [AGENTS.md](./AGENTS.md)
-
 ## Безопасность
 
 - VPN-приватные ключи генерируются на устройстве и не покидают его.
 - Сервер хранит только публичные ключи WireGuard.
-- TURN--credentials выдаются с ограниченным сроком жизни через HMAC.
+- TURN-credentials выдаются с ограниченным сроком жизни через HMAC.
 - Аутентификация по JWT, мультитенантная изоляция через `X-Tenant-Id`.
 
-## Лицензия
+## Документация
 
-[MIT](./LICENSE)
+- [AGENTS.md](./AGENTS.md) — контракт для AI-агентов
+- [CONTRIBUTING.md](./CONTRIBUTING.md) — как участвовать
+- [CHANGELOG.md](./CHANGELOG.md) — история изменений
+- [LICENSE](./LICENSE) — лицензия MIT
+- [Дизайн Phase 1](./docs/superpowers/specs/2026-06-12-pulse-chat-design.md)
+- [Дизайн Phase 1 Polish](./docs/superpowers/specs/2026-06-12-pulse-chat-phase1-polish-design.md)
+- [VPN + Robustness Design](./docs/superpowers/specs/2026-06-13-vpn-and-robustness-design.md)
+- [Production MVP Design](./docs/superpowers/specs/2026-06-13-production-mvp-design.md)
 
 ---
 

@@ -2,6 +2,14 @@
 
 Все значимые изменения фиксируются в этом файле.
 
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/).
+
+## [Unreleased]
+
+### Added
+
+- Vibe-first документация: README, AGENTS, LICENSE, CONTRIBUTING, CHANGELOG.
+
 ## [0.1.0] — 2026-06-14
 
 ### Добавлено
