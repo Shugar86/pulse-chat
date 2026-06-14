@@ -2,13 +2,17 @@
 
 Все значимые изменения фиксируются в этом файле.
 
-Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/).
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/), а версионирование следует [Semantic Versioning](https://semver.org/lang/ru/).
 
 ## [Unreleased]
 
-### Added
+### Добавлено
 
 - Vibe-first документация: README, AGENTS, LICENSE, CONTRIBUTING, CHANGELOG.
+
+### Изменено
+
+- Полировка документации до 10/10: единый вайб, TOC, примеры команд, CI badge, уточнённая архитектура и структура репозитория.
 
 ## [0.1.0] — 2026-06-14
 
@@ -37,3 +41,7 @@
 
 - Phase 1 core messenger MVP.
 - Базовая структура монорепозитория на pnpm workspaces.
+
+[Unreleased]: https://github.com/Shugar86/pulse-chat/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Shugar86/pulse-chat/compare/v0.0.1...v0.1.0
+[0.0.1]: https://github.com/Shugar86/pulse-chat/releases/tag/v0.0.1

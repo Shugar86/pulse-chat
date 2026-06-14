@@ -10,13 +10,36 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Expo-52-000020?logo=expo" alt="Expo" />
-  <img src="https://img.shields.io/badge/React%20Native-0.76-61DAFB?logo=react" alt="React Native" />
-  <img src="https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs" alt="Node.js" />
-  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql" alt="PostgreSQL" />
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT" /></a>
+  <img src="https://img.shields.io/badge/version-0.1.0-blue.svg" alt="Version" />
+  <a href="https://github.com/Shugar86/pulse-chat/actions/workflows/ci.yml"><img src="https://github.com/Shugar86/pulse-chat/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/pnpm-9-F69220?logo=pnpm" alt="pnpm 9" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript" alt="TypeScript 5.7" />
+  <img src="https://img.shields.io/badge/Expo-52-000020?logo=expo" alt="Expo SDK 52" />
+  <img src="https://img.shields.io/badge/React%20Native-0.76-61DAFB?logo=react" alt="React Native 0.76" />
+  <img src="https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs" alt="Node.js 22" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql" alt="PostgreSQL 16" />
+  <img src="https://img.shields.io/badge/Redis-7-DC382D?logo=redis" alt="Redis 7" />
   <img src="https://img.shields.io/badge/WireGuard-%E2%9C%93-88171A?logo=wireguard" alt="WireGuard" />
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" />
 </p>
+
+---
+
+## Содержание
+
+- [Что это](#что-это)
+- [Возможности](#возможности)
+- [Архитектура](#архитектура)
+- [Стек](#стек)
+- [Структура репозитория](#структура-репозитория)
+- [Быстрый старт](#быстрый-старт)
+- [Production deployment](#production-deployment)
+- [Примеры](#примеры)
+- [Тестирование](#тестирование)
+- [Безопасность](#безопасность)
+- [Дорожная карта](#дорожная-карта)
+- [Участие](#участие)
+- [Лицензия](#лицензия)
 
 ---
 
@@ -24,33 +47,36 @@
 
 **Pulse Chat** — мобильный мессенджер для команд и компаний, которым важно держать общение под контролем. Никаких сторонних мессенджеров, никаких утечек метаданных, никаких «мы никогда не читаем ваши сообщения» на словах.
 
-Здесь сообщения ходят через ваш сервер, звонки устанавливаются напрямую через WebRTC, а VPN-приватные ключи создаются прямо на устройстве и никогда его не покидают.
+Сообщения ходят через ваш сервер, звонки устанавливаются напрямую через WebRTC, а VPN-приватные ключи создаются прямо на устройстве и никогда его не покидают.
 
 Для кого:
 
 - Компании, которым нужен закрытый корпоративный чат.
 - Команды, работающие с чувствительными данными.
-- Разработчиков, которые хотят развернуть свой мессенджер на своей инфраструктуре.
+- Разработчики, которые хотят развернуть свой мессенджер на своей инфраструктуре.
+
+---
 
 ## Возможности
 
-| Возможность | Статус |
-|-------------|--------|
-| Регистрация / вход по email + JWT | ✅ |
-| Мультитенантность (компании / tenant) | ✅ |
-| Личные и групповые текстовые чаты | ✅ |
-| Статус доставки и прочтения сообщений | ✅ |
-| Аудиозвонки 1-to-1 через WebRTC | ✅ |
-| Signaling через Socket.io | ✅ |
-| Собственный TURN-сервер (coturn) | ✅ |
-| WireGuard VPN-конфиг из приложения | ✅ |
-| Клиентская генерация VPN-ключей | ✅ |
-| Android push-уведомления о звонках (FCM) | ✅ |
-| Продакшен Docker Compose + nginx + SSL | ✅ |
+| Возможность | Статус | Описание |
+|-------------|--------|----------|
+| Регистрация / вход по email + JWT | ✅ | Access + refresh токены, защищённые эндпоинты. |
+| Мультитенантность (компании / tenant) | ✅ | Изоляция пользователей и данных через `Tenant` / `TenantMembership`. |
+| Личные и групповые текстовые чаты | ✅ | Сообщения, статус доставки и прочтения. |
+| Аудиозвонки 1-to-1 через WebRTC | ✅ | Прямое P2P-соединение, где это возможно. |
+| Signaling через Socket.io | ✅ | Надёжная сигнализация звонков и сообщений в реальном времени. |
+| Собственный TURN-сервер (coturn) | ✅ | Обход NAT и симметричных файрволов с HMAC-credentials. |
+| WireGuard VPN-конфиг из приложения | ✅ | Генерация конфига без ручных настроек. |
+| Клиентская генерация VPN-ключей | ✅ | Приватный ключ никогда не покидает устройство. |
+| Android push-уведомления о звонках (FCM) | ✅ | Входящий звонок даже когда приложение в фоне. |
+| Продакшен Docker Compose + nginx + SSL | ✅ | Готовый стек для собственного VDS. |
+
+---
 
 ## Архитектура
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │  iOS / Android (EAS Build)                  │
 │  React Native + react-native-webrtc         │
@@ -59,7 +85,7 @@
                │ HTTPS / WSS
                ▼
 ┌─────────────────────────────────────────────┐
-│  VDS                                        │
+│  VDS / собственный сервер                   │
 │  ┌─────────────────────────────────────┐    │
 │  │  nginx (reverse proxy, SSL)         │    │
 │  │  api.pulse.chat  → api:4000         │    │
@@ -77,16 +103,30 @@
 └─────────────────────────────────────────────┘
 ```
 
+---
+
 ## Стек
 
-- **Frontend:** Expo SDK 52, React Native 0.76, TypeScript, React Navigation 7, i18next, Zustand, TanStack Query
-- **Backend:** Node.js 22, Express, Socket.io, JWT, Prisma, Zod
-- **Database:** PostgreSQL 16, Redis 7
-- **Real-time:** Socket.io (messages + call signaling)
-- **Media:** WebRTC, react-native-webrtc
-- **VPN:** WireGuard, wg-easy, react-native-wireguard-vpn
-- **Infra:** Docker Compose, nginx, certbot, coturn
-- **Push:** Firebase Cloud Messaging (Android)
+| Область | Технология | Назначение |
+|---------|------------|------------|
+| Mobile | Expo SDK 52, React Native 0.76, TypeScript | Кроссплатформенное приложение |
+| Navigation | React Navigation 7 | Навигация между экранами |
+| State | Zustand | Локальный стейт |
+| Server state | TanStack Query | Кеширование серверных данных |
+| i18n | i18next | Локализация ru / en |
+| Backend | Node.js 22, Express, Socket.io | REST API + real-time signaling |
+| Auth | JWT (access + refresh) | Аутентификация и авторизация |
+| ORM / DB | Prisma, PostgreSQL 16 | Реляционные данные |
+| Cache / PubSub | Redis 7 | Кеш, сессии, очереди |
+| Calls | WebRTC, react-native-webrtc | P2P аудиозвонки |
+| Signaling | Socket.io | Сигнализация звонков и сообщений |
+| TURN | coturn с HMAC-credentials | Обход NAT / файрволов |
+| VPN | WireGuard, wg-easy, react-native-wireguard-vpn | Приватный туннель |
+| Infra | Docker Compose, nginx, certbot | Контейнеризация и SSL |
+| Push | Firebase Cloud Messaging (Android) | Push о входящих звонках |
+| Workspaces | pnpm 9 | Монорепозиторий |
+
+---
 
 ## Структура репозитория
 
@@ -95,95 +135,154 @@ pulse-chat/
 ├── apps/
 │   └── mobile/              # Expo + React Native приложение
 ├── services/
-│   └── api/                 # Node.js backend
+│   └── api/                 # Node.js backend (Express + Socket.io)
 ├── packages/
-│   ├── shared/              # общие типы и константы
-│   └── ts-config/           # общий tsconfig
+│   └── shared/              # общие типы, схемы и константы
 ├── deploy/
 │   └── nginx/               # nginx config + SSL init script
-├── docker-compose.yml       # локальная разработка
-├── docker-compose.prod.yml  # продакшен
+├── docker-compose.yml       # локальная разработка (postgres, redis, wireguard)
+├── docker-compose.prod.yml  # продакшен (api, coturn, wg-easy, nginx, ssl)
 ├── .env.example             # env переменные
 └── docs/
+    ├── assets/              # логотипы и медиа
     ├── superpowers/specs/   # дизайн-документы
     └── superpowers/plans/   # планы реализации
 ```
 
-## Быстрый старт (локально)
+---
+
+## Быстрый старт
+
+Для разработки нужен **Node.js ≥ 22**, **pnpm ≥ 9** и **Docker** с Docker Compose.
 
 ```bash
 # 1. Клонировать репозиторий
 git clone git@github.com:Shugar86/pulse-chat.git
 cd pulse-chat
 
-# 2. Зависимости
+# 2. Установить зависимости
 pnpm install
 
-# 3. Переменные окружения
-cp .env.example .env                 # для Docker Compose
-cp .env.example services/api/.env    # для бэкенда
-# отредактируй оба файла
+# 3. Подготовить переменные окружения
+#    - корневой .env используется docker compose (postgres, redis, wireguard)
+#    - services/api/.env используется бэкендом
+#    - apps/mobile/.env используется Expo (EXPO_PUBLIC_API_URL)
+cp .env.example .env
+cp .env.example services/api/.env
+cp .env.example apps/mobile/.env
+# отредактируйте JWT-секреты (минимум 32 символа), CORS_ORIGIN и EXPO_PUBLIC_API_URL
 
 # 4. Поднять инфраструктуру
 docker compose up -d
 
-# 5. Применить схему Prisma
-cd services/api
-pnpm exec prisma db push
+# 5. Сгенерировать Prisma-клиент и применить схему
+pnpm db:generate
+pnpm db:push
 
 # 6. Запустить бэкенд
-pnpm dev
+pnpm -C services/api dev
 
 # 7. В другом окне запустить мобильное приложение
-cd ../../apps/mobile
-pnpm start
+pnpm -C apps/mobile start
+# затем отсканируйте QR-код в Expo Go (iOS / Android)
 ```
+
+> **Примечание:** для корректной работы WebRTC на реальном устройстве нужен доступ к API по сети, а не `localhost`. Используйте `EXPO_PUBLIC_API_URL=http://<your-lan-ip>:4000`.
+
+---
 
 ## Production deployment
 
-1. Направь домены на VDS:
+1. Направьте домены на VDS:
    - `api.pulse.chat`
    - `vpn.pulse.chat`
    - `turn.pulse.chat`
 
-2. Скопируй и заполни `.env`:
+2. Скопируйте и заполните `.env`:
+
+   ```bash
+   cp .env.example .env
+   # отредактируйте все секреты и домены
+   ```
+
+3. Получите SSL-сертификаты:
+
+   ```bash
+   bash deploy/nginx/init-ssl.sh
+   ```
+
+4. Запустите продакшен:
+
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d
+   ```
+
+5. Получите `WG_SERVER_PUBLIC_KEY` из контейнера `wg-easy` и обновите `.env`.
+
+6. Соберите мобильное приложение:
+
+   ```bash
+   cd apps/mobile
+   EXPO_PUBLIC_API_URL=https://api.pulse.chat eas build --platform android
+   # или --platform ios
+   ```
+
+---
+
+## Примеры
+
+### Регистрация пользователя
 
 ```bash
-cp .env.example .env
-# отредактируй все секреты
+curl -X POST http://localhost:4000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@company.com",
+    "password": "strong-password",
+    "name": "Иван Петров",
+    "companyName": "Acme"
+  }'
 ```
 
-3. Получи SSL-сертификаты:
+### Получение TURN-credentials
 
 ```bash
-bash deploy/nginx/init-ssl.sh
+curl -H "Authorization: Bearer <access-token>" \
+  http://localhost:4000/calls/turn-credentials
 ```
 
-4. Запусти продакшен:
+### Запуск тестов
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d
+# все пакеты
+pnpm test
+
+# только бэкенд
+pnpm -C services/api test
+
+# линтер
+pnpm lint
+
+# typecheck
+pnpm typecheck
 ```
 
-5. Получи `WG_SERVER_PUBLIC_KEY` из контейнера `wg-easy` и обнови `.env`.
-
-6. Собери мобильное приложение:
-
-```bash
-cd apps/mobile
-EXPO_PUBLIC_API_URL=https://api.pulse.chat eas build --platform android
-# или --platform ios
-```
+---
 
 ## Тестирование
 
 ```bash
 # backend
-pnpm test
+pnpm -C services/api test
 
 # lint
 pnpm lint
+
+# typecheck
+pnpm typecheck
 ```
+
+---
 
 ## Безопасность
 
@@ -192,16 +291,34 @@ pnpm lint
 - TURN-credentials выдаются с ограниченным сроком жизни через HMAC.
 - Аутентификация по JWT, мультитенантная изоляция через `X-Tenant-Id`.
 
-## Документация
+---
+
+## Дорожная карта
+
+См. [CHANGELOG.md](./CHANGELOG.md) для истории изменений и текущего статуса.
+
+Ближайшие направления:
+
+- [ ] Push-уведомления для сообщений (не только звонки).
+- [ ] iOS push через APNs.
+- [ ] Удаляемые и редактируемые сообщения.
+- [ ] Голосовые сообщения.
+- [ ] E2E-шифрование для сообщений.
+
+---
+
+## Участие
 
 - [AGENTS.md](./AGENTS.md) — контракт для AI-агентов
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — как участвовать
 - [CHANGELOG.md](./CHANGELOG.md) — история изменений
 - [LICENSE](./LICENSE) — лицензия MIT
-- [Дизайн Phase 1](./docs/superpowers/specs/2026-06-12-pulse-chat-design.md)
-- [Дизайн Phase 1 Polish](./docs/superpowers/specs/2026-06-12-pulse-chat-phase1-polish-design.md)
-- [VPN + Robustness Design](./docs/superpowers/specs/2026-06-13-vpn-and-robustness-design.md)
-- [Production MVP Design](./docs/superpowers/specs/2026-06-13-production-mvp-design.md)
+
+---
+
+## Лицензия
+
+[MIT](./LICENSE) © 2026 Shugar86
 
 ---
 
