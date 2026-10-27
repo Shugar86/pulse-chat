@@ -49,6 +49,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Apply migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pulsechat?schema=public
+        run: pnpm exec prisma migrate deploy
+
       - name: Test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pulsechat?schema=public
